@@ -42,7 +42,9 @@ export async function PATCH(request: Request, context: RouteContext) {
   const categoriaIds = parseCategoriaIds(formData);
   const nombre = formData.get("nombre") as string;
   const descripcion = (formData.get("descripcion") as string) ?? "";
-  const fotos = formData.getAll("fotos") as File[];
+  const fotos = (formData.getAll("fotos") as File[]).filter(
+    (f) => f && typeof f === "object" && "size" in f && f.size > 0
+  );
   const sale = parseItemSaleFields(formData);
 
   if (categoriaIds.length === 0 || !nombre?.trim()) {
@@ -146,8 +148,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       en_venta,
       cantidad_venta,
       categoria_id,
-      categorias ( nombre ),
-      item_categorias ( categoria_id, categorias ( nombre ) ),
+      categorias!items_categoria_id_fkey ( nombre ),
+      item_categorias ( categoria_id, categorias!item_categorias_categoria_id_fkey ( nombre ) ),
       fotos ( id, url, orden )
     `
     )

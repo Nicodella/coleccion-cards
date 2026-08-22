@@ -72,6 +72,13 @@ export default function AdminPage() {
     if (res.ok) {
       const data = await res.json();
       setItems(data);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setItems([]);
+      if (data.error) {
+        setMensaje(data.error);
+        setMensajeEsError(true);
+      }
     }
   }, []);
 
@@ -298,6 +305,9 @@ export default function AdminPage() {
     const input = document.getElementById("fotos-input") as HTMLInputElement | null;
     if (input) input.value = "";
     mostrarMensaje("");
+    requestAnimationFrame(() => {
+      document.getElementById("item-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   function toggleCategoriaItem(catId: string) {
@@ -723,7 +733,7 @@ export default function AdminPage() {
             <p className={styles.sectionHint}>Todavía no hay cards cargadas.</p>
           )}
 
-          <form className={styles.formGrid} onSubmit={handleGuardarItem}>
+          <form id="item-form" className={styles.formGrid} onSubmit={handleGuardarItem}>
             <h3 className={`${styles.formSubtitle} ${styles.fullWidth}`}>
               {editandoItemId ? "Editar card" : "Agregar card al álbum"}
             </h3>
