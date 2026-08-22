@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import FutbolPanel from "@/components/FutbolPanel";
 import CardDetailModal from "@/components/CardDetailModal";
 import ColeccionView from "@/components/ColeccionView";
@@ -32,15 +32,32 @@ export default function CollectionShell({
   categorias,
   items,
 }: CollectionShellProps) {
+  const router = useRouter();
   const [section, setSection] = useState<SectionId>("inicio");
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [futbolAbierto, setFutbolAbierto] = useState(false);
   const [cardDetalle, setCardDetalle] = useState<ItemConCategoria | null>(null);
+  const vestuarioTaps = useRef(0);
+  const vestuarioTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const irA = useCallback((destino: SectionId) => {
     setSection(destino);
     setMenuAbierto(false);
   }, []);
+
+  const intentarAbrirVestuario = useCallback(() => {
+    vestuarioTaps.current += 1;
+    if (vestuarioTimer.current) clearTimeout(vestuarioTimer.current);
+    vestuarioTimer.current = setTimeout(() => {
+      vestuarioTaps.current = 0;
+    }, 2500);
+
+    if (vestuarioTaps.current >= 5) {
+      vestuarioTaps.current = 0;
+      if (vestuarioTimer.current) clearTimeout(vestuarioTimer.current);
+      router.push("/admin");
+    }
+  }, [router]);
 
   const abrirCard = useCallback(
     (item: Item | ItemConCategoria, categoria?: Categoria) => {
@@ -172,10 +189,6 @@ export default function CollectionShell({
             Contacto
           </button>
         </nav>
-
-        <Link href="/admin" className="sidebar-admin">
-          🔐 Vestuario
-        </Link>
       </aside>
 
       <div className="app-main">
@@ -273,7 +286,15 @@ export default function CollectionShell({
           <span className="footer-ball" aria-hidden="true">
             ⚽
           </span>
-          <p>Colección personal · Rodrigo</p>
+          <p>
+            <button
+              type="button"
+              className="footer-secret"
+              onClick={intentarAbrirVestuario}
+            >
+              Colección personal · Rodrigo
+            </button>
+          </p>
         </footer>
       </div>
 
