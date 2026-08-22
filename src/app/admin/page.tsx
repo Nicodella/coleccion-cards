@@ -39,6 +39,7 @@ export default function AdminPage() {
   const [filtroCategoria, setFiltroCategoria] = useState("");
   const [filtroNombre, setFiltroNombre] = useState("");
   const [filtroDescripcion, setFiltroDescripcion] = useState("");
+  const [paginaItems, setPaginaItems] = useState(1);
 
   const [itemForm, setItemForm] = useState({
     categoria_ids: [] as string[],
@@ -309,7 +310,9 @@ export default function AdminPage() {
     if (input) input.value = "";
     mostrarMensaje("");
     requestAnimationFrame(() => {
-      document.getElementById("item-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document
+        .getElementById("item-form-section")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
 
@@ -395,6 +398,8 @@ export default function AdminPage() {
     }
   }
 
+  const PAGE_SIZE = 10;
+
   const itemsFiltrados = items.filter((item) => {
     if (
       filtroCategoria &&
@@ -412,6 +417,17 @@ export default function AdminPage() {
     }
     return true;
   });
+
+  const totalPaginas = Math.max(1, Math.ceil(itemsFiltrados.length / PAGE_SIZE));
+  const paginaActual = Math.min(paginaItems, totalPaginas);
+  const itemsPagina = itemsFiltrados.slice(
+    (paginaActual - 1) * PAGE_SIZE,
+    paginaActual * PAGE_SIZE
+  );
+
+  useEffect(() => {
+    setPaginaItems(1);
+  }, [filtroCategoria, filtroNombre, filtroDescripcion]);
 
   if (autenticado === null) {
     return <p className={styles.loading}>⚽ Entrando al vestuario...</p>;
@@ -696,124 +712,15 @@ export default function AdminPage() {
           </form>
         </section>
 
-        <section className={styles.section}>
-          <h2>🃏 Cards del álbum</h2>
+        <section className={styles.section} id="item-form-section">
+          <h2>{editandoItemId ? "✏️ Editar card" : "➕ Agregar card"}</h2>
           <p className={styles.sectionHint}>
-            Editá o eliminá cards existentes. Al editar, las fotos son opcionales
-            (si no subís nuevas, se mantienen las actuales).
+            {editandoItemId
+              ? "Modificá los datos y guardá. Las fotos son opcionales (si no subís nuevas, se mantienen)."
+              : "Cargá una card nueva al álbum. Después podés editarla desde la lista de abajo."}
           </p>
 
-          {items.length > 0 && (
-            <div className={styles.filtrosBar}>
-              <label>
-                Categoría
-                <select
-                  value={filtroCategoria}
-                  onChange={(e) => setFiltroCategoria(e.target.value)}
-                >
-                  <option value="">Todas</option>
-                  {categorias.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.emoji} {cat.nombre}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Nombre
-                <input
-                  type="search"
-                  placeholder="Buscar por nombre…"
-                  value={filtroNombre}
-                  onChange={(e) => setFiltroNombre(e.target.value)}
-                />
-              </label>
-              <label>
-                Descripción
-                <input
-                  type="search"
-                  placeholder="Buscar en descripción…"
-                  value={filtroDescripcion}
-                  onChange={(e) => setFiltroDescripcion(e.target.value)}
-                />
-              </label>
-              {(filtroCategoria || filtroNombre || filtroDescripcion) && (
-                <button
-                  type="button"
-                  className={styles.btnSecondary}
-                  onClick={() => {
-                    setFiltroCategoria("");
-                    setFiltroNombre("");
-                    setFiltroDescripcion("");
-                  }}
-                >
-                  Limpiar
-                </button>
-              )}
-            </div>
-          )}
-
-          {items.length > 0 ? (
-            itemsFiltrados.length > 0 ? (
-              <ul className={styles.itemList}>
-                {itemsFiltrados.map((item) => {
-                  const preview = item.fotos[0]?.url;
-                  return (
-                    <li key={item.id} className={styles.itemRow}>
-                      <div className={styles.itemInfo}>
-                        {preview ? (
-                          <img
-                            src={preview}
-                            alt=""
-                            className={styles.itemThumb}
-                          />
-                        ) : (
-                          <span className={styles.itemThumbEmpty}>🃏</span>
-                        )}
-                        <div>
-                          <strong>{item.nombre}</strong>
-                          <span className={styles.itemMeta}>
-                            {item.categoria_nombre}
-                            {item.en_venta && item.precio != null
-                              ? ` · USD ${item.precio} · ${item.cantidad_venta} disp.`
-                              : " · Colección"}
-                          </span>
-                        </div>
-                      </div>
-                      <div className={styles.categoriaActions}>
-                        <button
-                          type="button"
-                          className={styles.btnSecondary}
-                          onClick={() => iniciarEdicionItem(item)}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.btnDanger}
-                          onClick={() => handleEliminarItem(item.id, item.nombre)}
-                          disabled={loading}
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className={styles.sectionHint}>
-                Ninguna card coincide con los filtros.
-              </p>
-            )
-          ) : (
-            <p className={styles.sectionHint}>Todavía no hay cards cargadas.</p>
-          )}
-
           <form id="item-form" className={styles.formGrid} onSubmit={handleGuardarItem}>
-            <h3 className={`${styles.formSubtitle} ${styles.fullWidth}`}>
-              {editandoItemId ? "Editar card" : "Agregar card al álbum"}
-            </h3>
             <fieldset className={`${styles.catCheckGroup} ${styles.fullWidth}`}>
               <legend>Categorías (una o más)</legend>
               <div className={styles.catCheckList}>
@@ -944,11 +851,160 @@ export default function AdminPage() {
                   onClick={resetItemForm}
                   style={{ marginTop: "0.5rem" }}
                 >
-                  Cancelar
+                  Cancelar edición
                 </button>
               )}
             </div>
           </form>
+        </section>
+
+        <section className={styles.section}>
+          <h2>🃏 Cards del álbum</h2>
+          <p className={styles.sectionHint}>
+            Listado paginado (10 por página). Usá los filtros para encontrar una
+            card y editarla o eliminarla.
+          </p>
+
+          {items.length > 0 && (
+            <div className={styles.filtrosBar}>
+              <label>
+                Categoría
+                <select
+                  value={filtroCategoria}
+                  onChange={(e) => setFiltroCategoria(e.target.value)}
+                >
+                  <option value="">Todas</option>
+                  {categorias.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.emoji} {cat.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Nombre
+                <input
+                  type="search"
+                  placeholder="Buscar por nombre…"
+                  value={filtroNombre}
+                  onChange={(e) => setFiltroNombre(e.target.value)}
+                />
+              </label>
+              <label>
+                Descripción
+                <input
+                  type="search"
+                  placeholder="Buscar en descripción…"
+                  value={filtroDescripcion}
+                  onChange={(e) => setFiltroDescripcion(e.target.value)}
+                />
+              </label>
+              {(filtroCategoria || filtroNombre || filtroDescripcion) && (
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  onClick={() => {
+                    setFiltroCategoria("");
+                    setFiltroNombre("");
+                    setFiltroDescripcion("");
+                  }}
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+          )}
+
+          {items.length > 0 ? (
+            itemsFiltrados.length > 0 ? (
+              <>
+                <p className={styles.paginacionMeta}>
+                  Mostrando {(paginaActual - 1) * PAGE_SIZE + 1}–
+                  {Math.min(paginaActual * PAGE_SIZE, itemsFiltrados.length)} de{" "}
+                  {itemsFiltrados.length}
+                </p>
+                <ul className={styles.itemList}>
+                  {itemsPagina.map((item) => {
+                    const preview = item.fotos[0]?.url;
+                    return (
+                      <li key={item.id} className={styles.itemRow}>
+                        <div className={styles.itemInfo}>
+                          {preview ? (
+                            <img
+                              src={preview}
+                              alt=""
+                              className={styles.itemThumb}
+                            />
+                          ) : (
+                            <span className={styles.itemThumbEmpty}>🃏</span>
+                          )}
+                          <div>
+                            <strong>{item.nombre}</strong>
+                            <span className={styles.itemMeta}>
+                              {item.categoria_nombre}
+                              {item.en_venta && item.precio != null
+                                ? ` · USD ${item.precio} · ${item.cantidad_venta} disp.`
+                                : " · Colección"}
+                            </span>
+                          </div>
+                        </div>
+                        <div className={styles.categoriaActions}>
+                          <button
+                            type="button"
+                            className={styles.btnSecondary}
+                            onClick={() => iniciarEdicionItem(item)}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.btnDanger}
+                            onClick={() =>
+                              handleEliminarItem(item.id, item.nombre)
+                            }
+                            disabled={loading}
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {totalPaginas > 1 && (
+                  <div className={styles.paginacion}>
+                    <button
+                      type="button"
+                      className={styles.btnSecondary}
+                      disabled={paginaActual <= 1}
+                      onClick={() => setPaginaItems((p) => Math.max(1, p - 1))}
+                    >
+                      ← Anterior
+                    </button>
+                    <span className={styles.paginacionInfo}>
+                      Página {paginaActual} / {totalPaginas}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.btnSecondary}
+                      disabled={paginaActual >= totalPaginas}
+                      onClick={() =>
+                        setPaginaItems((p) => Math.min(totalPaginas, p + 1))
+                      }
+                    >
+                      Siguiente →
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className={styles.sectionHint}>
+                Ninguna card coincide con los filtros.
+              </p>
+            )
+          ) : (
+            <p className={styles.sectionHint}>Todavía no hay cards cargadas.</p>
+          )}
         </section>
       </div>
     </div>
