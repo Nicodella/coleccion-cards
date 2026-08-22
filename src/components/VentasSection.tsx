@@ -34,7 +34,7 @@ export default function VentasSection({
     <section className="ventas-section" aria-label="Ítems en venta">
       <header className="section-header">
         <h2>💰 Ventas</h2>
-        <p>Cards disponibles para comprar — contactame por WhatsApp</p>
+        <p>Cards disponibles para comprar — precios en pesos uruguayos ($)</p>
       </header>
 
       <div className="ventas-grid">

@@ -122,6 +122,7 @@ export default function CardDetailModal({
           {enVenta && (
             <div className="card-modal-venta">
               {precio && <span className="card-modal-precio">{precio}</span>}
+              <span className="card-modal-stock">pesos uruguayos</span>
               {item.cantidad_venta > 1 && (
                 <span className="card-modal-stock">
                   {item.cantidad_venta} disponibles

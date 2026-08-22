@@ -45,12 +45,11 @@ export function flattenItems(
 
 export function formatPrecio(precio: number | null): string | null {
   if (precio == null) return null;
-  return new Intl.NumberFormat("es-UY", {
-    style: "currency",
-    currency: "USD",
+  const monto = new Intl.NumberFormat("es-UY", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(precio);
+  return `$ ${monto}`;
 }
 
 /** Disponible en la lista de ventas: marcado + precio + stock > 0 */

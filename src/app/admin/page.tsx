@@ -783,11 +783,12 @@ export default function AdminPage() {
             {itemForm.en_venta && (
               <>
                 <label>
-                  Precio (USD)
+                  Precio ($)
                   <input
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="1"
+                    placeholder="ej. 500"
                     value={itemForm.precio}
                     onChange={(e) =>
                       setItemForm({ ...itemForm, precio: e.target.value })
@@ -943,7 +944,7 @@ export default function AdminPage() {
                             <span className={styles.itemMeta}>
                               {item.categoria_nombre}
                               {item.en_venta && item.precio != null
-                                ? ` · USD ${item.precio} · ${item.cantidad_venta} disp.`
+                                ? ` · $ ${item.precio} · ${item.cantidad_venta} disp.`
                                 : " · Colección"}
                             </span>
                           </div>
