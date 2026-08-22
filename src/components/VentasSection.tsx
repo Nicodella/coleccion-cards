@@ -9,12 +9,14 @@ interface VentasSectionProps {
   items: ItemConCategoria[];
   telefono: string | null;
   onVerColeccion: (categoriaId: string) => void;
+  onVerCard?: (item: ItemConCategoria) => void;
 }
 
 export default function VentasSection({
   items,
   telefono,
   onVerColeccion,
+  onVerCard,
 }: VentasSectionProps) {
   const enVenta = items.filter(estaEnVenta);
   const ordenados = [...enVenta].sort((a, b) => (b.precio ?? 0) - (a.precio ?? 0));
@@ -51,14 +53,24 @@ export default function VentasSection({
               className="venta-card"
               style={themeStyle(colores)}
             >
-              <div className="venta-imagen-wrap">
+              <button
+                type="button"
+                className="venta-imagen-wrap venta-imagen-btn"
+                onClick={() => onVerCard?.(item)}
+              >
                 <img src={imagen} alt={item.nombre} loading="lazy" />
                 <span className="venta-categoria">
                   {colores.emoji} {item.categoriaNombre}
                 </span>
-              </div>
+              </button>
               <div className="venta-body">
-                <h3>{item.nombre}</h3>
+                <button
+                  type="button"
+                  className="venta-titulo-btn"
+                  onClick={() => onVerCard?.(item)}
+                >
+                  <h3>{item.nombre}</h3>
+                </button>
                 {item.descripcion && <p>{item.descripcion}</p>}
                 {item.cantidad_venta > 1 && (
                   <p className="venta-stock">{item.cantidad_venta} disponibles</p>
@@ -79,9 +91,13 @@ export default function VentasSection({
                     <button
                       type="button"
                       className="venta-btn"
-                      onClick={() => onVerColeccion(item.categoriaId)}
+                      onClick={() =>
+                        onVerCard
+                          ? onVerCard(item)
+                          : onVerColeccion(item.categoriaId)
+                      }
                     >
-                      Ver más
+                      Ver card
                     </button>
                   </div>
                 </div>

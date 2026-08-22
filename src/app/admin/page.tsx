@@ -36,6 +36,9 @@ export default function AdminPage() {
 
   const [editandoItemId, setEditandoItemId] = useState<string | null>(null);
   const [items, setItems] = useState<ItemAdmin[]>([]);
+  const [filtroCategoria, setFiltroCategoria] = useState("");
+  const [filtroNombre, setFiltroNombre] = useState("");
+  const [filtroDescripcion, setFiltroDescripcion] = useState("");
 
   const [itemForm, setItemForm] = useState({
     categoria_ids: [] as string[],
@@ -392,6 +395,24 @@ export default function AdminPage() {
     }
   }
 
+  const itemsFiltrados = items.filter((item) => {
+    if (
+      filtroCategoria &&
+      !(item.categoria_ids?.includes(filtroCategoria) || item.categoria_id === filtroCategoria)
+    ) {
+      return false;
+    }
+    const qNombre = filtroNombre.trim().toLowerCase();
+    if (qNombre && !item.nombre.toLowerCase().includes(qNombre)) {
+      return false;
+    }
+    const qDesc = filtroDescripcion.trim().toLowerCase();
+    if (qDesc && !(item.descripcion ?? "").toLowerCase().includes(qDesc)) {
+      return false;
+    }
+    return true;
+  });
+
   if (autenticado === null) {
     return <p className={styles.loading}>⚽ Entrando al vestuario...</p>;
   }
@@ -682,53 +703,109 @@ export default function AdminPage() {
             (si no subís nuevas, se mantienen las actuales).
           </p>
 
+          {items.length > 0 && (
+            <div className={styles.filtrosBar}>
+              <label>
+                Categoría
+                <select
+                  value={filtroCategoria}
+                  onChange={(e) => setFiltroCategoria(e.target.value)}
+                >
+                  <option value="">Todas</option>
+                  {categorias.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.emoji} {cat.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Nombre
+                <input
+                  type="search"
+                  placeholder="Buscar por nombre…"
+                  value={filtroNombre}
+                  onChange={(e) => setFiltroNombre(e.target.value)}
+                />
+              </label>
+              <label>
+                Descripción
+                <input
+                  type="search"
+                  placeholder="Buscar en descripción…"
+                  value={filtroDescripcion}
+                  onChange={(e) => setFiltroDescripcion(e.target.value)}
+                />
+              </label>
+              {(filtroCategoria || filtroNombre || filtroDescripcion) && (
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  onClick={() => {
+                    setFiltroCategoria("");
+                    setFiltroNombre("");
+                    setFiltroDescripcion("");
+                  }}
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+          )}
+
           {items.length > 0 ? (
-            <ul className={styles.itemList}>
-              {items.map((item) => {
-                const preview = item.fotos[0]?.url;
-                return (
-                  <li key={item.id} className={styles.itemRow}>
-                    <div className={styles.itemInfo}>
-                      {preview ? (
-                        <img
-                          src={preview}
-                          alt=""
-                          className={styles.itemThumb}
-                        />
-                      ) : (
-                        <span className={styles.itemThumbEmpty}>🃏</span>
-                      )}
-                      <div>
-                        <strong>{item.nombre}</strong>
-                        <span className={styles.itemMeta}>
-                          {item.categoria_nombre}
-                          {item.en_venta && item.precio != null
-                            ? ` · USD ${item.precio} · ${item.cantidad_venta} disp.`
-                            : " · Colección"}
-                        </span>
+            itemsFiltrados.length > 0 ? (
+              <ul className={styles.itemList}>
+                {itemsFiltrados.map((item) => {
+                  const preview = item.fotos[0]?.url;
+                  return (
+                    <li key={item.id} className={styles.itemRow}>
+                      <div className={styles.itemInfo}>
+                        {preview ? (
+                          <img
+                            src={preview}
+                            alt=""
+                            className={styles.itemThumb}
+                          />
+                        ) : (
+                          <span className={styles.itemThumbEmpty}>🃏</span>
+                        )}
+                        <div>
+                          <strong>{item.nombre}</strong>
+                          <span className={styles.itemMeta}>
+                            {item.categoria_nombre}
+                            {item.en_venta && item.precio != null
+                              ? ` · USD ${item.precio} · ${item.cantidad_venta} disp.`
+                              : " · Colección"}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className={styles.categoriaActions}>
-                      <button
-                        type="button"
-                        className={styles.btnSecondary}
-                        onClick={() => iniciarEdicionItem(item)}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.btnDanger}
-                        onClick={() => handleEliminarItem(item.id, item.nombre)}
-                        disabled={loading}
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                      <div className={styles.categoriaActions}>
+                        <button
+                          type="button"
+                          className={styles.btnSecondary}
+                          onClick={() => iniciarEdicionItem(item)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.btnDanger}
+                          onClick={() => handleEliminarItem(item.id, item.nombre)}
+                          disabled={loading}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className={styles.sectionHint}>
+                Ninguna card coincide con los filtros.
+              </p>
+            )
           ) : (
             <p className={styles.sectionHint}>Todavía no hay cards cargadas.</p>
           )}

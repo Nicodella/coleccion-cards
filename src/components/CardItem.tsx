@@ -6,9 +6,10 @@ import { estaEnVenta, formatPrecio } from "@/lib/catalog";
 
 interface CardItemProps {
   item: Item;
+  onOpen?: () => void;
 }
 
-export default function CardItem({ item }: CardItemProps) {
+export default function CardItem({ item, onOpen }: CardItemProps) {
   const fotos = item.fotos ?? [];
   const [fotoActiva, setFotoActiva] = useState(0);
   const urlPrincipal = fotos[fotoActiva]?.url ?? "/placeholder.svg";
@@ -16,7 +17,22 @@ export default function CardItem({ item }: CardItemProps) {
 
   return (
     <article className="card">
-      <div className="card-frame">
+      <div
+        className={`card-frame${onOpen ? " card-frame-clickable" : ""}`}
+        role={onOpen ? "button" : undefined}
+        tabIndex={onOpen ? 0 : undefined}
+        onClick={onOpen}
+        onKeyDown={
+          onOpen
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onOpen();
+                }
+              }
+            : undefined
+        }
+      >
         <div className="card-shine" aria-hidden="true" />
         <div className="card-imagen-container">
           <span className="card-rarity">★ RARE</span>
@@ -33,6 +49,8 @@ export default function CardItem({ item }: CardItemProps) {
             className="card-miniaturas"
             role="tablist"
             aria-label={`Fotos de ${item.nombre}`}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
           >
             {fotos.map((foto, index) => (
               <button
@@ -61,6 +79,7 @@ export default function CardItem({ item }: CardItemProps) {
               <p className="card-precio">{precio}</p>
             </div>
           )}
+          {onOpen && <span className="card-ver-hint">Ver detalle</span>}
         </div>
       </div>
     </article>

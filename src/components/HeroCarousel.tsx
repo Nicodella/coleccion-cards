@@ -8,6 +8,7 @@ import { resolveColores, themeStyle } from "@/lib/categoryTheme";
 interface HeroCarouselProps {
   items: ItemConCategoria[];
   onVerColeccion: (categoriaId: string) => void;
+  onVerCard?: (item: ItemConCategoria) => void;
 }
 
 function cardsVisibles(): number {
@@ -17,7 +18,11 @@ function cardsVisibles(): number {
   return 3;
 }
 
-export default function HeroCarousel({ items, onVerColeccion }: HeroCarouselProps) {
+export default function HeroCarousel({
+  items,
+  onVerColeccion,
+  onVerCard,
+}: HeroCarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(3);
   const [canPrev, setCanPrev] = useState(false);
@@ -134,7 +139,9 @@ export default function HeroCarousel({ items, onVerColeccion }: HeroCarouselProp
               <button
                 type="button"
                 className="carousel-card-hit"
-                onClick={() => onVerColeccion(item.categoriaId)}
+                onClick={() =>
+                  onVerCard ? onVerCard(item) : onVerColeccion(item.categoriaId)
+                }
               >
                 <div className="carousel-card-visual">
                   <img src={imagen} alt={item.nombre} loading="lazy" />

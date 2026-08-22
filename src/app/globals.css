@@ -575,6 +575,25 @@ a {
   box-shadow: 0 0 8px var(--team-glow);
 }
 
+.card-frame-clickable {
+  cursor: pointer;
+}
+
+.card-frame-clickable:focus-visible {
+  outline: 2px solid var(--team-accent, var(--color-gold));
+  outline-offset: 3px;
+}
+
+.card-ver-hint {
+  margin-top: 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--team-accent, var(--color-gold));
+  opacity: 0.85;
+}
+
 .card-contenido {
   padding: 1rem 1.15rem 1.15rem;
   flex: 1;
@@ -1248,6 +1267,62 @@ a {
   animation: fadeSlideIn 0.35s ease;
 }
 
+.coleccion-filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+  margin: 0 0 1.25rem;
+  padding: 0.9rem 1rem;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid color-mix(in srgb, var(--team-accent, #ffd700) 35%, transparent);
+  border-radius: 12px;
+}
+
+.coleccion-filtros label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.coleccion-filtros input,
+.coleccion-filtros select {
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  border: 2px solid color-mix(in srgb, var(--team-accent, #ffd700) 40%, transparent);
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f3d1f;
+  font-size: 0.9rem;
+}
+
+.coleccion-filtros input:focus,
+.coleccion-filtros select:focus {
+  outline: none;
+  border-color: var(--team-accent, #ffd700);
+}
+
+.coleccion-filtros-limpiar {
+  justify-self: start;
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  border: 2px solid var(--team-accent, #ffd700);
+  background: transparent;
+  color: var(--team-accent, #ffd700);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.coleccion-filtros-limpiar:hover {
+  background: var(--team-accent, #ffd700);
+  color: var(--team-badge-text, #0f3d1f);
+}
+
 /* ── Carousel multi-card ── */
 .carousel-multi {
   margin-bottom: 1.5rem;
@@ -1575,6 +1650,30 @@ a {
 .venta-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px var(--team-glow, rgba(255, 215, 0, 0.2));
+}
+
+.venta-imagen-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.venta-titulo-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.venta-titulo-btn h3 {
+  margin: 0;
 }
 
 .venta-imagen-wrap {
@@ -1956,4 +2055,232 @@ a {
     font-size: 1.25rem;
   }
 }
+
+/* ── Card detail modal ── */
+.card-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(4, 18, 10, 0.78);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: card-modal-fade 0.2s ease;
+}
+
+@keyframes card-modal-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.card-modal {
+  position: relative;
+  width: min(920px, 100%);
+  max-height: min(92vh, 900px);
+  overflow: auto;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  background: linear-gradient(160deg, #0f3d1f 0%, #071a0e 100%);
+  border: 2px solid var(--team-border, var(--color-gold));
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 215, 0, 0.12);
+  animation: card-modal-up 0.25s ease;
+}
+
+@keyframes card-modal-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.card-modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 3;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.card-modal-media {
+  position: relative;
+  background: #000;
+  min-height: 320px;
+}
+
+.card-modal-media img {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  max-height: 80vh;
+  object-fit: contain;
+  object-position: center top;
+  background: #0a1f12;
+  display: block;
+}
+
+.card-modal-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.card-modal-nav-prev {
+  left: 0.6rem;
+}
+
+.card-modal-nav-next {
+  right: 0.6rem;
+}
+
+.card-modal-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.75rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.card-modal-dots button {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+}
+
+.card-modal-dots button.activa {
+  background: var(--team-accent, var(--color-gold));
+}
+
+.card-modal-body {
+  padding: 1.5rem 1.35rem 1.35rem;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card-modal-badge {
+  align-self: flex-start;
+  background: var(--team-badge-bg, var(--color-gold));
+  color: var(--team-badge-text, #0f3d1f);
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+}
+
+.card-modal-body h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  letter-spacing: 0.03em;
+  margin: 0;
+  line-height: 1.05;
+}
+
+.card-modal-desc {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+
+.card-modal-venta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding-top: 0.35rem;
+}
+
+.card-modal-precio {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--team-accent, var(--color-gold));
+}
+
+.card-modal-stock {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.card-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: auto;
+  padding-top: 0.75rem;
+}
+
+.card-modal-btn {
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  border: 2px solid var(--team-accent, var(--color-gold));
+  background: transparent;
+  color: var(--team-accent, var(--color-gold));
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.card-modal-btn:hover {
+  background: var(--team-accent, var(--color-gold));
+  color: var(--team-badge-text, #0f3d1f);
+}
+
+.card-modal-btn-wa {
+  border-color: #25d366;
+  color: #25d366;
+}
+
+.card-modal-btn-wa:hover {
+  background: #25d366;
+  color: #fff;
+}
+
+@media (max-width: 760px) {
+  .card-modal {
+    grid-template-columns: 1fr;
+    max-height: 94vh;
+  }
+
+  .card-modal-media img {
+    max-height: 48vh;
+    min-height: 220px;
+  }
+}
+
 

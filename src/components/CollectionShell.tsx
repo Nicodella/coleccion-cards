@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import FutbolPanel from "@/components/FutbolPanel";
+import CardDetailModal from "@/components/CardDetailModal";
 import ColeccionView from "@/components/ColeccionView";
 import ContactoSection from "@/components/ContactoSection";
 import HeroCarousel from "@/components/HeroCarousel";
@@ -10,7 +11,7 @@ import VentasSection from "@/components/VentasSection";
 import type { SectionId, ItemConCategoria } from "@/lib/catalog";
 import { estaEnVenta } from "@/lib/catalog";
 import { resolveColores, themeStyle } from "@/lib/categoryTheme";
-import type { Categoria, Perfil } from "@/lib/types";
+import type { Categoria, Item, Perfil } from "@/lib/types";
 
 interface CollectionShellProps {
   perfil: Perfil | null;
@@ -34,11 +35,36 @@ export default function CollectionShell({
   const [section, setSection] = useState<SectionId>("inicio");
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [futbolAbierto, setFutbolAbierto] = useState(false);
+  const [cardDetalle, setCardDetalle] = useState<ItemConCategoria | null>(null);
 
   const irA = useCallback((destino: SectionId) => {
     setSection(destino);
     setMenuAbierto(false);
   }, []);
+
+  const abrirCard = useCallback(
+    (item: Item | ItemConCategoria, categoria?: Categoria) => {
+      if ("categoriaId" in item && item.categoriaId) {
+        setCardDetalle(item as ItemConCategoria);
+        return;
+      }
+
+      const cat =
+        categoria ??
+        categorias.find((c) => c.items.some((i) => i.id === item.id));
+
+      if (!cat) return;
+
+      const colores = resolveColores(cat, cat.nombre);
+      setCardDetalle({
+        ...item,
+        categoriaId: cat.id,
+        categoriaNombre: cat.nombre,
+        ...colores,
+      });
+    },
+    [categorias]
+  );
 
   const categoriaActiva = section.startsWith("cat-")
     ? categorias.find((c) => c.id === section.replace("cat-", ""))
@@ -181,7 +207,11 @@ export default function CollectionShell({
         <div className="app-content" key={section}>
           {section === "inicio" && (
             <div className="inicio-view">
-              <HeroCarousel items={items} onVerColeccion={(id) => irA(`cat-${id}`)} />
+              <HeroCarousel
+                items={items}
+                onVerColeccion={(id) => irA(`cat-${id}`)}
+                onVerCard={(item) => abrirCard(item)}
+              />
               {categorias.length > 0 && (
                 <div className="inicio-colecciones">
                   <h2 className="inicio-subtitulo">Explorá mis colecciones</h2>
@@ -218,7 +248,13 @@ export default function CollectionShell({
           )}
 
           {categoriaActiva && indiceCategoria >= 0 && (
-            <ColeccionView categoria={categoriaActiva} index={indiceCategoria} />
+            <ColeccionView
+              categoria={categoriaActiva}
+              categorias={categorias}
+              index={indiceCategoria}
+              onVerCard={(item) => abrirCard(item, categoriaActiva)}
+              onCambiarCategoria={(id) => irA(`cat-${id}`)}
+            />
           )}
 
           {section === "ventas" && (
@@ -226,6 +262,7 @@ export default function CollectionShell({
               items={itemsEnVenta}
               telefono={perfil?.telefono ?? null}
               onVerColeccion={(id) => irA(`cat-${id}`)}
+              onVerCard={(item) => abrirCard(item)}
             />
           )}
 
@@ -239,6 +276,14 @@ export default function CollectionShell({
           <p>Colección personal · Rodrigo</p>
         </footer>
       </div>
+
+      {cardDetalle && (
+        <CardDetailModal
+          item={cardDetalle}
+          telefono={perfil?.telefono ?? null}
+          onClose={() => setCardDetalle(null)}
+        />
+      )}
 
       <FutbolPanel
         mobileOpen={futbolAbierto}
