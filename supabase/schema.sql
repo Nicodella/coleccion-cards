@@ -82,7 +82,7 @@ INSERT INTO perfil (nombre, direccion, telefono)
 SELECT
   'Rodrigo',
   'Centro Montevideo, Pocitos (Lunes a viernes) o Parque Batlle domingos',
-  '+598 99 123 456'
+  '+598 91 336 721'
 WHERE NOT EXISTS (SELECT 1 FROM perfil LIMIT 1);
 
 INSERT INTO categorias (nombre, color_accent, color_border, color_badge_bg, color_badge_text, emoji) VALUES
