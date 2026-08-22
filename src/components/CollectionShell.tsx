@@ -200,7 +200,7 @@ export default function CollectionShell({
             aria-expanded={futbolAbierto}
             onClick={() => setFutbolAbierto((v) => !v)}
           >
-            ⚽ Resultados
+            ⚽ <span className="futbol-toggle-label">Resultados</span>
           </button>
         </header>
 

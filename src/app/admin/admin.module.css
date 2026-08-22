@@ -166,6 +166,9 @@
 
 .adminWrapper {
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   background-color: #0f3d1f;
   background-image:
     repeating-linear-gradient(
@@ -186,8 +189,10 @@
 
 .adminPage {
   max-width: 760px;
+  width: 100%;
   margin: 0 auto;
   padding: 2rem 1.25rem 3rem;
+  min-width: 0;
 }
 
 .header {
@@ -356,7 +361,7 @@
 
 .filtrosBar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
   gap: 0.75rem;
   align-items: end;
   margin-bottom: 1rem;
@@ -364,6 +369,8 @@
   background: rgba(15, 61, 31, 0.04);
   border: 1px solid #d4e5d8;
   border-radius: 10px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .filtrosBar label {
@@ -447,6 +454,11 @@
   font-size: 0.8rem;
   color: #5a6b5e;
   margin-top: 0.15rem;
+  overflow-wrap: anywhere;
+}
+
+.itemInfo > div {
+  min-width: 0;
 }
 
 .fotosActuales {
@@ -619,6 +631,12 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.formGrid > * {
+  min-width: 0;
 }
 
 .formGrid label {
@@ -709,14 +727,54 @@
 }
 
 @media (max-width: 600px) {
+  .adminPage {
+    padding: 1.25rem 0.85rem 2.5rem;
+  }
+
   .formGrid,
   .formRow,
-  .colorGrid {
+  .colorGrid,
+  .filtrosBar {
     grid-template-columns: 1fr;
   }
 
   .header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .header h1 {
+    font-size: 1.75rem;
+  }
+
+  .headerActions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .itemRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .categoriaActions {
+    width: 100%;
+  }
+
+  .categoriaActions button {
+    flex: 1;
+  }
+
+  .loginForm {
+    padding: 1.5rem 1.15rem;
+    margin: 0 0.5rem;
+  }
+
+  .totpSetup {
+    max-width: 100%;
+  }
+
+  .totpSecret {
+    font-size: 0.75rem;
   }
 }

@@ -27,8 +27,9 @@ html {
 
 html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -62,6 +63,13 @@ body {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+}
+
+img,
+video,
+iframe,
+svg {
+  max-width: 100%;
 }
 
 a {
@@ -424,6 +432,8 @@ a {
   color: var(--color-white);
   letter-spacing: 0.04em;
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -461,7 +471,7 @@ a {
 /* ── Cards grid ── */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
   gap: 1.75rem;
 }
 
@@ -695,6 +705,8 @@ a {
   display: flex;
   min-height: 100vh;
   width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .sidebar-backdrop {
@@ -858,12 +870,14 @@ a {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .app-topbar {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   padding: 1rem 1.5rem;
   background: rgba(0, 0, 0, 0.25);
   border-bottom: 1px solid rgba(255, 215, 0, 0.2);
@@ -871,6 +885,13 @@ a {
   position: sticky;
   top: 0;
   z-index: 30;
+  min-width: 0;
+}
+
+.topbar-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .futbol-toggle {
@@ -884,6 +905,7 @@ a {
   border-radius: var(--radius-sm);
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: background 0.15s, border-color 0.15s;
 }
 
@@ -971,6 +993,8 @@ a {
   padding: 0.75rem 0.85rem 0.35rem;
   overflow-x: auto;
   flex-shrink: 0;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .futbol-liga-btn {
@@ -1024,6 +1048,7 @@ a {
 
 .futbol-vistas {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
   padding: 0 1rem 0.75rem;
   flex-shrink: 0;
@@ -1089,7 +1114,9 @@ a {
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-sm);
-  overflow: hidden;
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .standings-compact-league {
@@ -1236,12 +1263,18 @@ a {
   color: var(--color-white);
   letter-spacing: 0.03em;
   line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-content {
   flex: 1;
   padding: 1.5rem;
   animation: fadeSlideIn 0.35s ease;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 @keyframes fadeSlideIn {
@@ -1269,7 +1302,7 @@ a {
 
 .coleccion-filtros {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
   gap: 0.75rem;
   align-items: end;
   margin: 0 0 1.25rem;
@@ -1277,6 +1310,8 @@ a {
   background: rgba(0, 0, 0, 0.28);
   border: 1px solid color-mix(in srgb, var(--team-accent, #ffd700) 35%, transparent);
   border-radius: 12px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .coleccion-filtros label {
@@ -1326,14 +1361,17 @@ a {
 /* ── Carousel multi-card ── */
 .carousel-multi {
   margin-bottom: 1.5rem;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .carousel-multi-header {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   margin-bottom: 0.85rem;
+  min-width: 0;
 }
 
 .carousel-multi-kicker {
@@ -1347,10 +1385,11 @@ a {
 
 .carousel-multi-title {
   font-family: var(--font-display);
-  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  font-size: clamp(1.2rem, 2.5vw, 1.85rem);
   color: var(--color-white);
   letter-spacing: 0.04em;
   line-height: 1;
+  min-width: 0;
 }
 
 .carousel-multi-nav {
@@ -1529,7 +1568,7 @@ a {
 
 .inicio-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr));
   gap: 1rem;
 }
 
@@ -1635,7 +1674,7 @@ a {
 /* ── Ventas ── */
 .ventas-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
   gap: 1.25rem;
 }
 
@@ -2008,11 +2047,69 @@ a {
   }
 
   .app-content {
-    padding: 1rem;
+    padding: 0.85rem;
   }
 
-  .ventas-grid {
+  .app-topbar {
+    padding: 0.7rem 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .futbol-toggle {
+    margin-left: 0;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.78rem;
+  }
+
+  .futbol-toggle-label {
+    display: none;
+  }
+
+  .ventas-grid,
+  .cards-grid,
+  .contacto-grid {
     grid-template-columns: 1fr;
+  }
+
+  .coleccion-filtros {
+    grid-template-columns: 1fr;
+    padding: 0.75rem;
+  }
+
+  .categoria-header {
+    gap: 0.45rem;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .categoria-num {
+    font-size: 1.6rem;
+  }
+
+  .categoria-titulo {
+    flex-basis: 100%;
+    font-size: 1.45rem;
+  }
+
+  .carousel-multi-header {
+    flex-wrap: wrap;
+  }
+
+  .inicio-subtitulo {
+    font-size: 1.35rem;
+  }
+
+  .venta-footer {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .venta-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .section-header h2 {
+    font-size: 1.5rem;
   }
 }
 
@@ -2035,24 +2132,42 @@ a {
     justify-content: center;
   }
 
-  .categoria-header {
-    gap: 0.5rem;
-  }
-
-  .categoria-num {
-    font-size: 1.75rem;
-  }
-
-  .cards-grid {
-    grid-template-columns: 1fr;
-  }
-
   .inicio-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
   }
 
   .topbar-title {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
+  }
+
+  .card-modal-backdrop {
+    padding: 0.5rem;
+    align-items: stretch;
+  }
+
+  .card-modal {
+    max-height: 96dvh;
+    border-radius: 12px;
+  }
+
+  .card-modal-body {
+    padding: 1.1rem 1rem 1.15rem;
+  }
+
+  .card-modal-actions {
+    flex-direction: column;
+  }
+
+  .card-modal-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 380px) {
+  .inicio-grid {
+    grid-template-columns: 1fr;
   }
 }
 
