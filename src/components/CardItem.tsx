@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Item } from "@/lib/types";
+import { estaEnVenta, formatPrecio } from "@/lib/catalog";
 
 interface CardItemProps {
   item: Item;
@@ -11,6 +12,7 @@ export default function CardItem({ item }: CardItemProps) {
   const fotos = item.fotos ?? [];
   const [fotoActiva, setFotoActiva] = useState(0);
   const urlPrincipal = fotos[fotoActiva]?.url ?? "/placeholder.svg";
+  const precio = estaEnVenta(item) ? formatPrecio(item.precio) : null;
 
   return (
     <article className="card">
@@ -53,17 +55,10 @@ export default function CardItem({ item }: CardItemProps) {
           {item.descripcion && (
             <p className="card-descripcion">{item.descripcion}</p>
           )}
-          {item.en_venta && item.precio != null && (
+          {precio && (
             <div className="card-footer">
               <span className="card-precio-label">Valor</span>
-              <p className="card-precio">
-                {new Intl.NumberFormat("es-UY", {
-                  style: "currency",
-                  currency: "USD",
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 2,
-                }).format(item.precio)}
-              </p>
+              <p className="card-precio">{precio}</p>
             </div>
           )}
         </div>

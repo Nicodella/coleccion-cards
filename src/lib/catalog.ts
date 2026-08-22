@@ -7,6 +7,7 @@ export interface ItemConCategoria extends Item, CategoriaColores {
   categoriaNombre: string;
 }
 
+/** Aplana categorías → items únicos (para carrusel / ventas). */
 export function flattenItems(
   categorias: {
     id: string;
@@ -19,18 +20,27 @@ export function flattenItems(
     items: Item[];
   }[]
 ): ItemConCategoria[] {
-  return categorias.flatMap((cat) =>
-    cat.items.map((item) => ({
-      ...item,
-      categoriaId: cat.id,
-      categoriaNombre: cat.nombre,
-      color_accent: cat.color_accent,
-      color_border: cat.color_border,
-      color_badge_bg: cat.color_badge_bg,
-      color_badge_text: cat.color_badge_text,
-      emoji: cat.emoji,
-    }))
-  );
+  const seen = new Set<string>();
+  const result: ItemConCategoria[] = [];
+
+  for (const cat of categorias) {
+    for (const item of cat.items) {
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      result.push({
+        ...item,
+        categoriaId: cat.id,
+        categoriaNombre: cat.nombre,
+        color_accent: cat.color_accent,
+        color_border: cat.color_border,
+        color_badge_bg: cat.color_badge_bg,
+        color_badge_text: cat.color_badge_text,
+        emoji: cat.emoji,
+      });
+    }
+  }
+
+  return result;
 }
 
 export function formatPrecio(precio: number | null): string | null {
@@ -41,4 +51,17 @@ export function formatPrecio(precio: number | null): string | null {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(precio);
+}
+
+/** Disponible en la lista de ventas: marcado + precio + stock > 0 */
+export function estaEnVenta(item: {
+  en_venta: boolean;
+  precio: number | null;
+  cantidad_venta?: number;
+}): boolean {
+  return (
+    Boolean(item.en_venta) &&
+    item.precio != null &&
+    (item.cantidad_venta ?? 0) > 0
+  );
 }

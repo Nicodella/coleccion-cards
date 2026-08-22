@@ -17,6 +17,7 @@ export interface Item {
   descripcion: string;
   en_venta: boolean;
   precio: number | null;
+  cantidad_venta: number;
   fotos: Foto[];
 }
 
@@ -41,5 +42,6 @@ export interface CategoriaSimple extends CategoriaColores {
 
 export interface ItemAdmin extends Item {
   categoria_id: string;
+  categoria_ids: string[];
   categoria_nombre: string;
 }

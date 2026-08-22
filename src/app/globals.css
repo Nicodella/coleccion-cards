@@ -1645,6 +1645,19 @@ a {
   color: var(--team-accent, var(--color-gold));
 }
 
+.venta-stock {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.venta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
 .venta-btn {
   padding: 0.45rem 0.85rem;
   background: transparent;
@@ -1654,12 +1667,25 @@ a {
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
   transition: background 0.15s, color 0.15s;
 }
 
 .venta-btn:hover {
   background: var(--team-accent, var(--color-gold));
   color: var(--team-badge-text, var(--color-pitch-dark));
+}
+
+.venta-btn-wa {
+  border-color: #25d366;
+  color: #25d366;
+}
+
+.venta-btn-wa:hover {
+  background: #25d366;
+  color: #fff;
 }
 
 /* ── Contacto ── */

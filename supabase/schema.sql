@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS categorias (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Ítems dentro de cada categoría
+-- Ítems (categoria_id = categoría principal; también pueden tener varias vía item_categorias)
 CREATE TABLE IF NOT EXISTS items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   categoria_id UUID NOT NULL REFERENCES categorias(id) ON DELETE CASCADE,
@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS items (
   descripcion TEXT DEFAULT '',
   precio NUMERIC(10, 2),
   en_venta BOOLEAN NOT NULL DEFAULT false,
+  cantidad_venta INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -42,20 +43,31 @@ CREATE TABLE IF NOT EXISTS fotos (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Multi-categoría
+CREATE TABLE IF NOT EXISTS item_categorias (
+  item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  categoria_id UUID NOT NULL REFERENCES categorias(id) ON DELETE CASCADE,
+  PRIMARY KEY (item_id, categoria_id)
+);
+
 -- Índices
 CREATE INDEX IF NOT EXISTS idx_items_categoria ON items(categoria_id);
 CREATE INDEX IF NOT EXISTS idx_fotos_item ON fotos(item_id);
+CREATE INDEX IF NOT EXISTS idx_item_categorias_categoria ON item_categorias(categoria_id);
+CREATE INDEX IF NOT EXISTS idx_item_categorias_item ON item_categorias(item_id);
 
 -- Row Level Security: lectura pública
 ALTER TABLE perfil ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categorias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fotos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE item_categorias ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Lectura pública perfil" ON perfil FOR SELECT USING (true);
 CREATE POLICY "Lectura pública categorias" ON categorias FOR SELECT USING (true);
 CREATE POLICY "Lectura pública items" ON items FOR SELECT USING (true);
 CREATE POLICY "Lectura pública fotos" ON fotos FOR SELECT USING (true);
+CREATE POLICY "Lectura pública item_categorias" ON item_categorias FOR SELECT USING (true);
 
 -- Config admin (2FA, etc.) — sin políticas públicas
 CREATE TABLE IF NOT EXISTS admin_settings (

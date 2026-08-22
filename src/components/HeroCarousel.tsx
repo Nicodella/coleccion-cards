@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ItemConCategoria } from "@/lib/catalog";
-import { formatPrecio } from "@/lib/catalog";
+import { estaEnVenta, formatPrecio } from "@/lib/catalog";
 import { resolveColores, themeStyle } from "@/lib/categoryTheme";
 
 interface HeroCarouselProps {
@@ -123,7 +123,7 @@ export default function HeroCarousel({ items, onVerColeccion }: HeroCarouselProp
         {items.map((item) => {
           const colores = resolveColores(item, item.categoriaNombre);
           const imagen = item.fotos[0]?.url ?? "/placeholder.svg";
-          const precio = item.en_venta ? formatPrecio(item.precio) : null;
+          const precio = estaEnVenta(item) ? formatPrecio(item.precio) : null;
 
           return (
             <article

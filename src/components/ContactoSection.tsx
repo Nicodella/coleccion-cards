@@ -1,12 +1,8 @@
 import type { Perfil } from "@/lib/types";
+import { whatsappUrl } from "@/lib/whatsapp";
 
 interface ContactoSectionProps {
   perfil: Perfil | null;
-}
-
-function whatsappUrl(telefono: string): string {
-  const digits = telefono.replace(/\D/g, "");
-  return `https://wa.me/${digits}`;
 }
 
 export default function ContactoSection({ perfil }: ContactoSectionProps) {

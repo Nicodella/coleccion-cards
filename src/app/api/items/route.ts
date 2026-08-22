@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/auth";
-import { mapItemRow, parseItemSaleFields } from "@/lib/itemSale";
+import {
+  mapItemRow,
+  parseCategoriaIds,
+  parseItemSaleFields,
+} from "@/lib/itemSale";
 import { saveItemImage } from "@/lib/imageStorage";
 import { createSupabaseAdmin, getSupabaseConfigError } from "@/lib/supabase";
 
@@ -10,11 +14,30 @@ const ITEM_FIELDS = `
   descripcion,
   precio,
   en_venta,
+  cantidad_venta,
   categoria_id,
   created_at,
   categorias ( nombre ),
+  item_categorias ( categoria_id, categorias ( nombre ) ),
   fotos ( id, url, orden )
 `;
+
+async function syncItemCategorias(
+  supabase: ReturnType<typeof createSupabaseAdmin>,
+  itemId: string,
+  categoriaIds: string[]
+) {
+  await supabase.from("item_categorias").delete().eq("item_id", itemId);
+  if (categoriaIds.length === 0) return;
+
+  const { error } = await supabase.from("item_categorias").insert(
+    categoriaIds.map((categoria_id) => ({
+      item_id: itemId,
+      categoria_id,
+    }))
+  );
+  if (error) throw new Error(error.message);
+}
 
 export async function GET() {
   if (!(await isAdminAuthenticated())) {
@@ -50,14 +73,17 @@ export async function POST(request: Request) {
   }
 
   const formData = await request.formData();
-  const categoria_id = formData.get("categoria_id") as string;
+  const categoriaIds = parseCategoriaIds(formData);
   const nombre = formData.get("nombre") as string;
   const descripcion = (formData.get("descripcion") as string) ?? "";
   const fotos = formData.getAll("fotos") as File[];
   const sale = parseItemSaleFields(formData);
 
-  if (!categoria_id || !nombre?.trim()) {
-    return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
+  if (categoriaIds.length === 0 || !nombre?.trim()) {
+    return NextResponse.json(
+      { error: "Seleccioná al menos una categoría y un nombre" },
+      { status: 400 }
+    );
   }
 
   if (sale.error) {
@@ -88,6 +114,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = createSupabaseAdmin();
+  const categoria_id = categoriaIds[0];
 
   const { data: item, error: itemError } = await supabase
     .from("items")
@@ -97,6 +124,7 @@ export async function POST(request: Request) {
       descripcion: descripcion.trim(),
       en_venta: sale.en_venta,
       precio: sale.precio,
+      cantidad_venta: sale.cantidad_venta,
     })
     .select()
     .single();
@@ -106,6 +134,14 @@ export async function POST(request: Request) {
       { error: itemError?.message ?? "Error al crear ítem" },
       { status: 500 }
     );
+  }
+
+  try {
+    await syncItemCategorias(supabase, item.id, categoriaIds);
+  } catch (err) {
+    await supabase.from("items").delete().eq("id", item.id);
+    const message = err instanceof Error ? err.message : "Error en categorías";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 
   const fotosRows = uploadedUrls.map((url, i) => ({

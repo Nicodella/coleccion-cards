@@ -442,6 +442,27 @@
   color: #0f3d1f;
 }
 
+.catCheckGroup {
+  border: 2px solid #d4e5d8;
+  border-radius: 10px;
+  padding: 0.85rem 1rem 1rem;
+  margin: 0;
+}
+
+.catCheckGroup legend {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f3d1f;
+  padding: 0 0.35rem;
+}
+
+.catCheckList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-top: 0.35rem;
+}
+
 .btnSecondary {
   padding: 0.45rem 0.85rem;
   background: #fff;

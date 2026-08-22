@@ -8,6 +8,7 @@ import ContactoSection from "@/components/ContactoSection";
 import HeroCarousel from "@/components/HeroCarousel";
 import VentasSection from "@/components/VentasSection";
 import type { SectionId, ItemConCategoria } from "@/lib/catalog";
+import { estaEnVenta } from "@/lib/catalog";
 import { resolveColores, themeStyle } from "@/lib/categoryTheme";
 import type { Categoria, Perfil } from "@/lib/types";
 
@@ -48,7 +49,7 @@ export default function CollectionShell({
     : -1;
 
   const totalItems = items.length;
-  const itemsEnVenta = items.filter((item) => item.en_venta);
+  const itemsEnVenta = items.filter(estaEnVenta);
 
   return (
     <div className="app-shell">
@@ -183,7 +184,7 @@ export default function CollectionShell({
               <HeroCarousel items={items} onVerColeccion={(id) => irA(`cat-${id}`)} />
               {categorias.length > 0 && (
                 <div className="inicio-colecciones">
-                  <h2 className="inicio-subtitulo">Explorá tus colecciones</h2>
+                  <h2 className="inicio-subtitulo">Explorá mis colecciones</h2>
                   <div className="inicio-grid">
                     {categorias.map((cat) => {
                       const colores = resolveColores(cat, cat.nombre);
@@ -221,7 +222,11 @@ export default function CollectionShell({
           )}
 
           {section === "ventas" && (
-            <VentasSection items={itemsEnVenta} onVerColeccion={(id) => irA(`cat-${id}`)} />
+            <VentasSection
+              items={itemsEnVenta}
+              telefono={perfil?.telefono ?? null}
+              onVerColeccion={(id) => irA(`cat-${id}`)}
+            />
           )}
 
           {section === "contacto" && <ContactoSection perfil={perfil} />}

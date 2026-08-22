@@ -38,11 +38,12 @@ export default function AdminPage() {
   const [items, setItems] = useState<ItemAdmin[]>([]);
 
   const [itemForm, setItemForm] = useState({
-    categoria_id: "",
+    categoria_ids: [] as string[],
     nombre: "",
     descripcion: "",
     en_venta: false,
     precio: "",
+    cantidad_venta: "1",
   });
   const [fotos, setFotos] = useState<FileList | null>(null);
 
@@ -266,11 +267,12 @@ export default function AdminPage() {
   function resetItemForm() {
     setEditandoItemId(null);
     setItemForm({
-      categoria_id: "",
+      categoria_ids: [],
       nombre: "",
       descripcion: "",
       en_venta: false,
       precio: "",
+      cantidad_venta: "1",
     });
     setFotos(null);
     const input = document.getElementById("fotos-input") as HTMLInputElement | null;
@@ -280,11 +282,17 @@ export default function AdminPage() {
   function iniciarEdicionItem(item: ItemAdmin) {
     setEditandoItemId(item.id);
     setItemForm({
-      categoria_id: item.categoria_id,
+      categoria_ids:
+        item.categoria_ids?.length > 0
+          ? item.categoria_ids
+          : item.categoria_id
+            ? [item.categoria_id]
+            : [],
       nombre: item.nombre,
       descripcion: item.descripcion,
       en_venta: item.en_venta,
       precio: item.precio != null ? String(item.precio) : "",
+      cantidad_venta: String(item.cantidad_venta > 0 ? item.cantidad_venta : 1),
     });
     setFotos(null);
     const input = document.getElementById("fotos-input") as HTMLInputElement | null;
@@ -292,12 +300,24 @@ export default function AdminPage() {
     mostrarMensaje("");
   }
 
+  function toggleCategoriaItem(catId: string) {
+    setItemForm((prev) => {
+      const has = prev.categoria_ids.includes(catId);
+      return {
+        ...prev,
+        categoria_ids: has
+          ? prev.categoria_ids.filter((id) => id !== catId)
+          : [...prev.categoria_ids, catId],
+      };
+    });
+  }
+
   async function handleGuardarItem(e: FormEvent) {
     e.preventDefault();
     mostrarMensaje("");
 
-    if (!itemForm.categoria_id) {
-      mostrarMensaje("Seleccioná una categoría", true);
+    if (itemForm.categoria_ids.length === 0) {
+      mostrarMensaje("Seleccioná al menos una categoría", true);
       return;
     }
 
@@ -311,11 +331,15 @@ export default function AdminPage() {
     setLoading(true);
 
     const formData = new FormData();
-    formData.append("categoria_id", itemForm.categoria_id);
+    itemForm.categoria_ids.forEach((id) => formData.append("categoria_ids", id));
     formData.append("nombre", itemForm.nombre);
     formData.append("descripcion", itemForm.descripcion);
     formData.append("en_venta", String(itemForm.en_venta));
     formData.append("precio", itemForm.en_venta ? itemForm.precio : "");
+    formData.append(
+      "cantidad_venta",
+      itemForm.en_venta ? itemForm.cantidad_venta : "0"
+    );
 
     if (fotos) {
       Array.from(fotos).forEach((file) => {
@@ -669,7 +693,7 @@ export default function AdminPage() {
                         <span className={styles.itemMeta}>
                           {item.categoria_nombre}
                           {item.en_venta && item.precio != null
-                            ? ` · USD ${item.precio}`
+                            ? ` · USD ${item.precio} · ${item.cantidad_venta} disp.`
                             : " · Colección"}
                         </span>
                       </div>
@@ -703,23 +727,23 @@ export default function AdminPage() {
             <h3 className={`${styles.formSubtitle} ${styles.fullWidth}`}>
               {editandoItemId ? "Editar card" : "Agregar card al álbum"}
             </h3>
-            <label>
-              Categoría
-              <select
-                value={itemForm.categoria_id}
-                onChange={(e) =>
-                  setItemForm({ ...itemForm, categoria_id: e.target.value })
-                }
-                required
-              >
-                <option value="">Seleccionar...</option>
+            <fieldset className={`${styles.catCheckGroup} ${styles.fullWidth}`}>
+              <legend>Categorías (una o más)</legend>
+              <div className={styles.catCheckList}>
                 {categorias.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.emoji} {cat.nombre}
-                  </option>
+                  <label key={cat.id} className={styles.checkRow}>
+                    <input
+                      type="checkbox"
+                      checked={itemForm.categoria_ids.includes(cat.id)}
+                      onChange={() => toggleCategoriaItem(cat.id)}
+                    />
+                    <span>
+                      {cat.emoji} {cat.nombre}
+                    </span>
+                  </label>
                 ))}
-              </select>
-            </label>
+              </div>
+            </fieldset>
 
             <label>
               Nombre
@@ -753,6 +777,9 @@ export default function AdminPage() {
                     ...itemForm,
                     en_venta: e.target.checked,
                     precio: e.target.checked ? itemForm.precio : "",
+                    cantidad_venta: e.target.checked
+                      ? itemForm.cantidad_venta || "1"
+                      : "0",
                   })
                 }
               />
@@ -760,19 +787,37 @@ export default function AdminPage() {
             </label>
 
             {itemForm.en_venta && (
-              <label>
-                Precio (USD)
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={itemForm.precio}
-                  onChange={(e) =>
-                    setItemForm({ ...itemForm, precio: e.target.value })
-                  }
-                  required
-                />
-              </label>
+              <>
+                <label>
+                  Precio (USD)
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={itemForm.precio}
+                    onChange={(e) =>
+                      setItemForm({ ...itemForm, precio: e.target.value })
+                    }
+                    required
+                  />
+                </label>
+                <label>
+                  Cantidad de repetidas
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={itemForm.cantidad_venta}
+                    onChange={(e) =>
+                      setItemForm({
+                        ...itemForm,
+                        cantidad_venta: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </label>
+              </>
             )}
 
             <label className={styles.fullWidth}>
