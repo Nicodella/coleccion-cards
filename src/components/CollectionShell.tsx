@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import FutbolPanel from "@/components/FutbolPanel";
 import CardDetailModal from "@/components/CardDetailModal";
 import ColeccionView from "@/components/ColeccionView";
+import ContactoSection from "@/components/ContactoSection";
 import HeroCarousel from "@/components/HeroCarousel";
 import VentasSection from "@/components/VentasSection";
 import type { SectionId, ItemConCategoria } from "@/lib/catalog";
@@ -21,6 +22,7 @@ interface CollectionShellProps {
 function sectionLabel(section: SectionId, categorias: Categoria[]): string {
   if (section === "inicio") return "Inicio";
   if (section === "ventas") return "Ventas";
+  if (section === "contacto") return "Contacto";
   const catId = section.replace("cat-", "");
   return categorias.find((c) => c.id === catId)?.nombre ?? "Colección";
 }
@@ -198,6 +200,17 @@ export default function CollectionShell({
               <span className="sidebar-link-count">{itemsEnVenta.length}</span>
             )}
           </button>
+
+          <button
+            type="button"
+            className={`sidebar-link${section === "contacto" ? " activo" : ""}`}
+            onClick={() => irA("contacto")}
+          >
+            <span className="sidebar-link-icon" aria-hidden="true">
+              📞
+            </span>
+            Contacto
+          </button>
         </nav>
       </aside>
 
@@ -288,6 +301,8 @@ export default function CollectionShell({
               onVerCard={(item) => abrirCard(item)}
             />
           )}
+
+          {section === "contacto" && <ContactoSection perfil={perfil} />}
         </div>
 
         <footer className="footer app-footer">
