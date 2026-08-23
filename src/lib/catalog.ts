@@ -1,6 +1,6 @@
 import type { Item, CategoriaColores } from "./types";
 
-export type SectionId = "inicio" | "ventas" | "contacto" | `cat-${string}`;
+export type SectionId = "inicio" | "ventas" | `cat-${string}`;
 
 export interface ItemConCategoria extends Item, CategoriaColores {
   categoriaId: string;

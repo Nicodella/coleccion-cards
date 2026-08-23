@@ -2,7 +2,7 @@ import { createHash } from "crypto";
 import { isAdminAuthenticated } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase";
 
-const SECCIONES_VALIDAS = /^(inicio|ventas|contacto|cat-[0-9a-f-]{36})$/i;
+const SECCIONES_VALIDAS = /^(inicio|ventas|cat-[0-9a-f-]{36})$/i;
 
 export function hashIp(ip: string): string {
   const salt = process.env.ADMIN_PASSWORD?.trim() || "coleccion-cards";
