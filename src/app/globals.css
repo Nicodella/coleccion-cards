@@ -1306,6 +1306,18 @@ a {
   cursor: default;
 }
 
+.footer-visitas {
+  width: 100%;
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0.15rem 0 0;
+}
+
+.app-footer {
+  flex-wrap: wrap;
+}
+
 .categoria-view {
   animation: fadeSlideIn 0.35s ease;
 }

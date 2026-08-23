@@ -385,6 +385,48 @@
   cursor: not-allowed;
 }
 
+.visitasTotal {
+  font-size: 1.1rem;
+  color: #0f3d1f;
+  margin: 0 0 0.85rem;
+}
+
+.visitasTotal strong {
+  font-family: var(--font-display, "Bebas Neue", sans-serif);
+  font-size: 2rem;
+  color: #1a6b34;
+  margin-right: 0.25rem;
+}
+
+.visitasList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.visitasRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0.75rem;
+  background: rgba(15, 61, 31, 0.04);
+  border: 1px solid #d4e5d8;
+  border-radius: 8px;
+}
+
+.visitasSeccion {
+  font-weight: 700;
+  color: #0f3d1f;
+  text-transform: capitalize;
+}
+
+.visitasMeta {
+  font-size: 0.85rem;
+  color: #5a6b5e;
+}
+
 .filtrosBar {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));

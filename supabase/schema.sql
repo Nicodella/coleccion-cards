@@ -77,6 +77,20 @@ CREATE TABLE IF NOT EXISTS admin_settings (
 );
 ALTER TABLE admin_settings ENABLE ROW LEVEL SECURITY;
 
+-- Visitas (solo servidor / service role)
+CREATE TABLE IF NOT EXISTS visitas (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  ip_hash TEXT NOT NULL,
+  seccion TEXT NOT NULL,
+  dia DATE NOT NULL DEFAULT (CURRENT_DATE),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (ip_hash, seccion, dia)
+);
+CREATE INDEX IF NOT EXISTS idx_visitas_dia ON visitas(dia DESC);
+CREATE INDEX IF NOT EXISTS idx_visitas_seccion ON visitas(seccion);
+CREATE INDEX IF NOT EXISTS idx_visitas_ip_hash ON visitas(ip_hash);
+ALTER TABLE visitas ENABLE ROW LEVEL SECURITY;
+
 -- Datos iniciales
 INSERT INTO perfil (nombre, direccion, telefono)
 SELECT

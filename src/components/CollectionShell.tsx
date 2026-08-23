@@ -39,11 +39,34 @@ export default function CollectionShell({
   const [cardDetalle, setCardDetalle] = useState<ItemConCategoria | null>(null);
   const vestuarioTaps = useRef(0);
   const vestuarioTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [visitantes, setVisitantes] = useState<number | null>(null);
 
   const irA = useCallback((destino: SectionId) => {
     setSection(destino);
     setMenuAbierto(false);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/visitas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seccion: section }),
+    }).catch(() => {});
+
+    fetch("/api/visitas")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && typeof data.visitantes === "number") {
+          setVisitantes(data.visitantes);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [section]);
 
   const intentarAbrirVestuario = useCallback(() => {
     vestuarioTaps.current += 1;
@@ -295,6 +318,11 @@ export default function CollectionShell({
               Colección personal · Rodrigo
             </button>
           </p>
+          {visitantes != null && visitantes > 0 && (
+            <p className="footer-visitas">
+              {visitantes} {visitantes === 1 ? "visitante" : "visitantes"}
+            </p>
+          )}
         </footer>
       </div>
 

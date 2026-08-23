@@ -40,6 +40,10 @@ export default function AdminPage() {
   const [filtroNombre, setFiltroNombre] = useState("");
   const [filtroDescripcion, setFiltroDescripcion] = useState("");
   const [paginaItems, setPaginaItems] = useState(1);
+  const [visitasStats, setVisitasStats] = useState<{
+    visitantes: number;
+    porSeccion: { seccion: string; visitas: number; ips: number }[];
+  } | null>(null);
 
   const [itemForm, setItemForm] = useState({
     categoria_ids: [] as string[],
@@ -86,6 +90,17 @@ export default function AdminPage() {
     }
   }, []);
 
+  const cargarVisitas = useCallback(async () => {
+    const res = await fetch("/api/admin/visitas");
+    if (res.ok) {
+      const data = await res.json();
+      setVisitasStats({
+        visitantes: data.visitantes ?? 0,
+        porSeccion: data.porSeccion ?? [],
+      });
+    }
+  }, []);
+
   useEffect(() => {
     verificarSesion();
   }, [verificarSesion]);
@@ -123,8 +138,9 @@ export default function AdminPage() {
     if (autenticado) {
       cargarCategorias();
       cargarItems();
+      cargarVisitas();
     }
-  }, [autenticado, cargarCategorias, cargarItems]);
+  }, [autenticado, cargarCategorias, cargarItems, cargarVisitas]);
 
   function mostrarMensaje(texto: string, esError = false) {
     setMensaje(texto);
@@ -543,6 +559,42 @@ export default function AdminPage() {
           <p className={mensajeEsError ? styles.mensajeError : styles.mensaje}>
             {mensaje}
           </p>
+        )}
+
+        {visitasStats && (
+          <section className={styles.section}>
+            <h2>👀 Visitas</h2>
+            <p className={styles.sectionHint}>
+              Visitantes únicos (IPs distintas). No se cuentan tus visitas si
+              estás logueado en el vestuario. Cada IP cuenta 1 vez por sección
+              por día.
+            </p>
+            <p className={styles.visitasTotal}>
+              <strong>{visitasStats.visitantes}</strong>{" "}
+              {visitasStats.visitantes === 1 ? "visitante" : "visitantes"} únicos
+            </p>
+            {visitasStats.porSeccion.length > 0 ? (
+              <ul className={styles.visitasList}>
+                {visitasStats.porSeccion.map((row) => {
+                  const label = row.seccion.startsWith("cat-")
+                    ? categorias.find((c) => c.id === row.seccion.slice(4))
+                        ?.nombre ?? row.seccion
+                    : row.seccion;
+                  return (
+                    <li key={row.seccion} className={styles.visitasRow}>
+                      <span className={styles.visitasSeccion}>{label}</span>
+                      <span className={styles.visitasMeta}>
+                        {row.ips} {row.ips === 1 ? "IP" : "IPs"} · {row.visitas}{" "}
+                        {row.visitas === 1 ? "día" : "días"}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className={styles.sectionHint}>Todavía no hay visitas registradas.</p>
+            )}
+          </section>
         )}
 
         <section className={styles.section}>
