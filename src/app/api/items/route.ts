@@ -85,7 +85,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Indicá un nombre" }, { status: 400 });
   }
 
-  if (fotos.length === 0) {
+  const fotosReuseRaw = formData.get("fotos_reuse");
+  let fotosReuse: string[] = [];
+  if (typeof fotosReuseRaw === "string" && fotosReuseRaw.trim()) {
+    try {
+      const parsed = JSON.parse(fotosReuseRaw) as unknown;
+      if (Array.isArray(parsed)) {
+        fotosReuse = parsed
+          .map((u) => (typeof u === "string" ? u.trim() : ""))
+          .filter(Boolean);
+      }
+    } catch {
+      return NextResponse.json(
+        { error: "Fotos reutilizadas inválidas" },
+        { status: 400 }
+      );
+    }
+  }
+
+  if (fotos.length === 0 && fotosReuse.length === 0) {
     return NextResponse.json({ error: "Subí al menos una foto" }, { status: 400 });
   }
 
@@ -131,6 +149,8 @@ export async function POST(request: Request) {
     );
   }
 
+  const allUrls = [...uploadedUrls, ...fotosReuse];
+
   const supabase = createSupabaseAdmin();
   const categoria_id = tipo === "venta" ? null : categoriaIds[0];
 
@@ -166,7 +186,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
-  const fotosRows = uploadedUrls.map((url, i) => ({
+  const fotosRows = allUrls.map((url, i) => ({
     item_id: item.id,
     url,
     orden: i,

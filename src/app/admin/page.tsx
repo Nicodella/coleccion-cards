@@ -62,6 +62,8 @@ export default function AdminPage() {
     cantidad_venta: "1",
   });
   const [fotosVenta, setFotosVenta] = useState<FileList | null>(null);
+  const [clonDesdeId, setClonDesdeId] = useState("");
+  const [fotosClonadas, setFotosClonadas] = useState<string[]>([]);
 
   const verificarSesion = useCallback(async () => {
     const res = await fetch("/api/admin/session");
@@ -320,8 +322,32 @@ export default function AdminPage() {
       cantidad_venta: "1",
     });
     setFotosVenta(null);
+    setClonDesdeId("");
+    setFotosClonadas([]);
     const input = document.getElementById("fotos-venta-input") as HTMLInputElement | null;
     if (input) input.value = "";
+  }
+
+  function clonarDesdeColeccion(item: ItemAdmin) {
+    setEditandoItemId(null);
+    setEditandoVentaId(null);
+    setClonDesdeId(item.id);
+    setVentaForm({
+      nombre: item.nombre,
+      descripcion: item.descripcion,
+      precio: "",
+      cantidad_venta: "1",
+    });
+    setFotosVenta(null);
+    setFotosClonadas(item.fotos.map((f) => f.url));
+    const input = document.getElementById("fotos-venta-input") as HTMLInputElement | null;
+    if (input) input.value = "";
+    mostrarMensaje("");
+    requestAnimationFrame(() => {
+      document
+        .getElementById("venta-form-section")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   function iniciarEdicionItem(item: ItemAdmin) {
@@ -355,6 +381,8 @@ export default function AdminPage() {
   function iniciarEdicionVenta(item: ItemAdmin) {
     setEditandoItemId(null);
     setEditandoVentaId(item.id);
+    setClonDesdeId("");
+    setFotosClonadas([]);
     setVentaForm({
       nombre: item.nombre,
       descripcion: item.descripcion,
@@ -436,9 +464,11 @@ export default function AdminPage() {
     mostrarMensaje("");
 
     const esEdicion = Boolean(editandoVentaId);
+    const tieneFotosNuevas = Boolean(fotosVenta && fotosVenta.length > 0);
+    const tieneFotosClon = fotosClonadas.length > 0;
 
-    if (!esEdicion && (!fotosVenta || fotosVenta.length === 0)) {
-      mostrarMensaje("Subí al menos una foto", true);
+    if (!esEdicion && !tieneFotosNuevas && !tieneFotosClon) {
+      mostrarMensaje("Subí una foto o cloná una card de la colección", true);
       return;
     }
 
@@ -452,10 +482,12 @@ export default function AdminPage() {
     formData.append("precio", ventaForm.precio);
     formData.append("cantidad_venta", ventaForm.cantidad_venta);
 
-    if (fotosVenta) {
+    if (tieneFotosNuevas && fotosVenta) {
       Array.from(fotosVenta).forEach((file) => {
         formData.append("fotos", file);
       });
+    } else if (!esEdicion && tieneFotosClon) {
+      formData.append("fotos_reuse", JSON.stringify(fotosClonadas));
     }
 
     const res = esEdicion
@@ -1054,6 +1086,13 @@ export default function AdminPage() {
                           </button>
                           <button
                             type="button"
+                            className={styles.btnSecondary}
+                            onClick={() => clonarDesdeColeccion(item)}
+                          >
+                            A venta
+                          </button>
+                          <button
+                            type="button"
                             className={styles.btnDanger}
                             onClick={() =>
                               handleEliminarItem(item.id, item.nombre)
@@ -1106,11 +1145,39 @@ export default function AdminPage() {
         <section className={styles.section} id="venta-form-section">
           <h2>{editandoVentaId ? "✏️ Editar venta" : "💰 Ventas"}</h2>
           <p className={styles.sectionHint}>
-            Cards solo para la sección Ventas del sitio. No van a ninguna
-            colección ni categoría.
+            Cards solo para la sección Ventas del sitio. Podés crear una nueva o
+            clonar una de tu colección (copia nombre, descripción y fotos; el
+            álbum no se modifica).
           </p>
 
           <form className={styles.formGrid} onSubmit={handleGuardarVenta}>
+            {!editandoVentaId && itemsColeccion.length > 0 && (
+              <label className={styles.fullWidth}>
+                Clonar desde colección
+                <select
+                  value={clonDesdeId}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    if (!id) {
+                      setClonDesdeId("");
+                      setFotosClonadas([]);
+                      return;
+                    }
+                    const item = itemsColeccion.find((i) => i.id === id);
+                    if (item) clonarDesdeColeccion(item);
+                  }}
+                >
+                  <option value="">Elegí una card del álbum…</option>
+                  {itemsColeccion.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.nombre}
+                      {item.categoria_nombre ? ` (${item.categoria_nombre})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
             <label>
               Nombre
               <input
@@ -1170,16 +1237,34 @@ export default function AdminPage() {
               Fotos{" "}
               {editandoVentaId
                 ? "(opcional — reemplaza las actuales)"
-                : "(una o más)"}
+                : fotosClonadas.length > 0
+                  ? "(opcional — si subís nuevas, reemplazan las clonadas)"
+                  : "(una o más)"}
               <input
                 id="fotos-venta-input"
                 type="file"
                 accept="image/*"
                 multiple
-                onChange={(e) => setFotosVenta(e.target.files)}
-                required={!editandoVentaId}
+                onChange={(e) => {
+                  setFotosVenta(e.target.files);
+                  if (e.target.files && e.target.files.length > 0) {
+                    setFotosClonadas([]);
+                  }
+                }}
+                required={!editandoVentaId && fotosClonadas.length === 0}
               />
             </label>
+
+            {!editandoVentaId && fotosClonadas.length > 0 && (
+              <div className={`${styles.fotosActuales} ${styles.fullWidth}`}>
+                <p className={styles.sectionHint}>
+                  Fotos clonadas de la colección (no se vuelven a subir):
+                </p>
+                {fotosClonadas.map((url) => (
+                  <img key={url} src={url} alt="" />
+                ))}
+              </div>
+            )}
 
             {editandoVentaId && (
               <div className={`${styles.fotosActuales} ${styles.fullWidth}`}>
@@ -1199,14 +1284,14 @@ export default function AdminPage() {
                     ? "Guardar cambios"
                     : "💰 Agregar a ventas"}
               </button>
-              {editandoVentaId && (
+              {(editandoVentaId || clonDesdeId || fotosClonadas.length > 0) && (
                 <button
                   type="button"
                   className={styles.btnSecondary}
                   onClick={resetVentaForm}
                   style={{ marginTop: "0.5rem" }}
                 >
-                  Cancelar edición
+                  Cancelar
                 </button>
               )}
             </div>
