@@ -25,6 +25,27 @@ function mapPublicItem(item: {
   cantidad_venta?: number | null;
   fotos?: { id: string; url: string; orden: number }[] | null;
 }): Item {
+  return {
+    id: item.id,
+    nombre: item.nombre,
+    descripcion: item.descripcion ?? "",
+    // En colección nunca se muestra como venta (las ventas son items aparte)
+    en_venta: false,
+    precio: null,
+    cantidad_venta: 0,
+    fotos: (item.fotos ?? []).sort((a, b) => a.orden - b.orden),
+  };
+}
+
+function mapPublicVentaItem(item: {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  precio: number | string | null;
+  en_venta?: boolean | null;
+  cantidad_venta?: number | null;
+  fotos?: { id: string; url: string; orden: number }[] | null;
+}): Item {
   const cantidad = Number(item.cantidad_venta ?? 0);
   const enVenta = Boolean(item.en_venta) && cantidad > 0;
 
@@ -120,7 +141,11 @@ export async function getCategoriasConItems(): Promise<Categoria[]> {
     });
   }
 
-  const itemRows = items ?? [];
+  const itemRows = (items ?? []).filter((item) => {
+    // Solo colección: tiene categoría (principal o junction)
+    const links = item.item_categorias ?? [];
+    return Boolean(item.categoria_id) || links.length > 0;
+  });
 
   return (cats ?? []).map((cat) => {
     const colores = resolveColores(cat, cat.nombre);
@@ -140,6 +165,38 @@ export async function getCategoriasConItems(): Promise<Categoria[]> {
       items: catItems,
     };
   });
+}
+
+/** Ítems del panel Ventas: sin categoría, marcados en venta con stock. */
+export async function getItemsEnVenta(): Promise<Item[]> {
+  if (!isSupabaseConfigured()) return [];
+
+  const supabase = createSupabaseClient();
+  const { data, error } = await supabase
+    .from("items")
+    .select(
+      `
+      id,
+      nombre,
+      descripcion,
+      precio,
+      en_venta,
+      cantidad_venta,
+      categoria_id,
+      fotos ( id, url, orden )
+    `
+    )
+    .is("categoria_id", null)
+    .eq("en_venta", true)
+    .gt("cantidad_venta", 0)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error al cargar ventas:", error.message);
+    return [];
+  }
+
+  return (data ?? []).map(mapPublicVentaItem).filter((i) => i.en_venta);
 }
 
 export async function getCategoriasSimples() {

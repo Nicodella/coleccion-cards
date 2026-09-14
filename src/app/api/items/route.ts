@@ -4,6 +4,7 @@ import {
   mapItemRow,
   parseCategoriaIds,
   parseItemSaleFields,
+  parseItemTipo,
 } from "@/lib/itemSale";
 import { saveItemImage } from "@/lib/imageStorage";
 import { createSupabaseAdmin, getSupabaseConfigError } from "@/lib/supabase";
@@ -73,27 +74,42 @@ export async function POST(request: Request) {
   }
 
   const formData = await request.formData();
-  const categoriaIds = parseCategoriaIds(formData);
+  const tipo = parseItemTipo(formData);
   const nombre = formData.get("nombre") as string;
   const descripcion = (formData.get("descripcion") as string) ?? "";
   const fotos = (formData.getAll("fotos") as File[]).filter(
     (f) => f && typeof f === "object" && "size" in f && f.size > 0
   );
-  const sale = parseItemSaleFields(formData);
 
-  if (categoriaIds.length === 0 || !nombre?.trim()) {
-    return NextResponse.json(
-      { error: "Seleccioná al menos una categoría y un nombre" },
-      { status: 400 }
-    );
-  }
-
-  if (sale.error) {
-    return NextResponse.json({ error: sale.error }, { status: 400 });
+  if (!nombre?.trim()) {
+    return NextResponse.json({ error: "Indicá un nombre" }, { status: 400 });
   }
 
   if (fotos.length === 0) {
     return NextResponse.json({ error: "Subí al menos una foto" }, { status: 400 });
+  }
+
+  let categoriaIds: string[] = [];
+  let sale: ReturnType<typeof parseItemSaleFields>;
+
+  if (tipo === "venta") {
+    formData.set("en_venta", "true");
+    sale = parseItemSaleFields(formData);
+    if (sale.error || !sale.en_venta) {
+      return NextResponse.json(
+        { error: sale.error ?? "Indicá precio y cantidad para la venta" },
+        { status: 400 }
+      );
+    }
+  } else {
+    categoriaIds = parseCategoriaIds(formData);
+    if (categoriaIds.length === 0) {
+      return NextResponse.json(
+        { error: "Seleccioná al menos una categoría" },
+        { status: 400 }
+      );
+    }
+    sale = { en_venta: false, precio: null, cantidad_venta: 0 };
   }
 
   const uploadedUrls: string[] = [];
@@ -116,7 +132,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = createSupabaseAdmin();
-  const categoria_id = categoriaIds[0];
+  const categoria_id = tipo === "venta" ? null : categoriaIds[0];
 
   const { data: item, error: itemError } = await supabase
     .from("items")
@@ -139,7 +155,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    await syncItemCategorias(supabase, item.id, categoriaIds);
+    await syncItemCategorias(
+      supabase,
+      item.id,
+      tipo === "venta" ? [] : categoriaIds
+    );
   } catch (err) {
     await supabase.from("items").delete().eq("id", item.id);
     const message = err instanceof Error ? err.message : "Error en categorías";

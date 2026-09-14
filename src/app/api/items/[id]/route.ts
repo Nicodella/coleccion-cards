@@ -4,6 +4,7 @@ import {
   mapItemRow,
   parseCategoriaIds,
   parseItemSaleFields,
+  parseItemTipo,
 } from "@/lib/itemSale";
 import { saveItemImage } from "@/lib/imageStorage";
 import { createSupabaseAdmin, getSupabaseConfigError } from "@/lib/supabase";
@@ -39,23 +40,38 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const { id } = await context.params;
   const formData = await request.formData();
-  const categoriaIds = parseCategoriaIds(formData);
+  const tipo = parseItemTipo(formData);
   const nombre = formData.get("nombre") as string;
   const descripcion = (formData.get("descripcion") as string) ?? "";
   const fotos = (formData.getAll("fotos") as File[]).filter(
     (f) => f && typeof f === "object" && "size" in f && f.size > 0
   );
-  const sale = parseItemSaleFields(formData);
 
-  if (categoriaIds.length === 0 || !nombre?.trim()) {
-    return NextResponse.json(
-      { error: "Seleccioná al menos una categoría y un nombre" },
-      { status: 400 }
-    );
+  if (!nombre?.trim()) {
+    return NextResponse.json({ error: "Indicá un nombre" }, { status: 400 });
   }
 
-  if (sale.error) {
-    return NextResponse.json({ error: sale.error }, { status: 400 });
+  let categoriaIds: string[] = [];
+  let sale: ReturnType<typeof parseItemSaleFields>;
+
+  if (tipo === "venta") {
+    formData.set("en_venta", "true");
+    sale = parseItemSaleFields(formData);
+    if (sale.error || !sale.en_venta) {
+      return NextResponse.json(
+        { error: sale.error ?? "Indicá precio y cantidad para la venta" },
+        { status: 400 }
+      );
+    }
+  } else {
+    categoriaIds = parseCategoriaIds(formData);
+    if (categoriaIds.length === 0) {
+      return NextResponse.json(
+        { error: "Seleccioná al menos una categoría" },
+        { status: 400 }
+      );
+    }
+    sale = { en_venta: false, precio: null, cantidad_venta: 0 };
   }
 
   const supabase = createSupabaseAdmin();
@@ -77,7 +93,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { error: updateError } = await supabase
     .from("items")
     .update({
-      categoria_id: categoriaIds[0],
+      categoria_id: tipo === "venta" ? null : categoriaIds[0],
       nombre: nombre.trim(),
       descripcion: descripcion.trim(),
       en_venta: sale.en_venta,
@@ -91,7 +107,11 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   try {
-    await syncItemCategorias(supabase, id, categoriaIds);
+    await syncItemCategorias(
+      supabase,
+      id,
+      tipo === "venta" ? [] : categoriaIds
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error en categorías";
     return NextResponse.json({ error: message }, { status: 500 });

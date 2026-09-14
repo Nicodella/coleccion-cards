@@ -41,7 +41,9 @@ export interface CategoriaSimple extends CategoriaColores {
 }
 
 export interface ItemAdmin extends Item {
-  categoria_id: string;
+  categoria_id: string | null;
   categoria_ids: string[];
   categoria_nombre: string;
+  /** Sin categoría = item del panel Ventas */
+  es_venta: boolean;
 }

@@ -28,7 +28,7 @@ export function parseItemSaleFields(formData: FormData): {
       en_venta: true,
       precio,
       cantidad_venta: 0,
-      error: "Indicá cuántas repetidas tenés para vender",
+      error: "Indicá cuántas unidades tenés para vender",
     };
   }
 
@@ -38,6 +38,11 @@ export function parseItemSaleFields(formData: FormData): {
   }
 
   return { en_venta: true, precio, cantidad_venta: cantidad };
+}
+
+/** "venta" = panel ventas (sin categoría); "coleccion" = álbum */
+export function parseItemTipo(formData: FormData): "venta" | "coleccion" {
+  return formData.get("tipo") === "venta" ? "venta" : "coleccion";
 }
 
 export function parseCategoriaIds(formData: FormData): string[] {
@@ -55,7 +60,7 @@ export function mapItemRow(row: {
   precio: number | string | null;
   en_venta?: boolean | null;
   cantidad_venta?: number | null;
-  categoria_id: string;
+  categoria_id: string | null;
   categorias: { nombre: string } | { nombre: string }[] | null;
   item_categorias?:
     | { categoria_id: string; categorias?: { nombre: string } | { nombre: string }[] | null }[]
@@ -67,6 +72,8 @@ export function mapItemRow(row: {
   const fotos = row.fotos ?? [];
 
   const links = row.item_categorias ?? [];
+  const es_venta = !row.categoria_id && links.length === 0;
+
   const categoria_ids =
     links.length > 0
       ? links.map((l) => l.categoria_id)
@@ -81,8 +88,9 @@ export function mapItemRow(row: {
     })
     .filter((n): n is string => Boolean(n));
 
-  const categoria_nombres =
-    nombresExtra.length > 0
+  const categoria_nombres = es_venta
+    ? "Ventas"
+    : nombresExtra.length > 0
       ? [...new Set(nombresExtra)].join(", ")
       : categoria?.nombre ?? "";
 
@@ -98,7 +106,8 @@ export function mapItemRow(row: {
     cantidad_venta: cantidad,
     categoria_id: row.categoria_id,
     categoria_ids,
-    categoria_nombre: categoria_nombres || categoria?.nombre || "",
+    categoria_nombre: categoria_nombres,
+    es_venta,
     fotos: fotos.sort((a, b) => a.orden - b.orden),
   };
 }

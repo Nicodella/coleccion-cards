@@ -9,7 +9,6 @@ import ContactoSection from "@/components/ContactoSection";
 import HeroCarousel from "@/components/HeroCarousel";
 import VentasSection from "@/components/VentasSection";
 import type { SectionId, ItemConCategoria } from "@/lib/catalog";
-import { estaEnVenta } from "@/lib/catalog";
 import { resolveColores, themeStyle } from "@/lib/categoryTheme";
 import type { Categoria, Item, Perfil } from "@/lib/types";
 
@@ -17,6 +16,7 @@ interface CollectionShellProps {
   perfil: Perfil | null;
   categorias: Categoria[];
   items: ItemConCategoria[];
+  itemsVenta: ItemConCategoria[];
 }
 
 function sectionLabel(section: SectionId, categorias: Categoria[]): string {
@@ -31,6 +31,7 @@ export default function CollectionShell({
   perfil,
   categorias,
   items,
+  itemsVenta,
 }: CollectionShellProps) {
   const router = useRouter();
   const [section, setSection] = useState<SectionId>("inicio");
@@ -93,7 +94,13 @@ export default function CollectionShell({
         categoria ??
         categorias.find((c) => c.items.some((i) => i.id === item.id));
 
-      if (!cat) return;
+      if (!cat) {
+        const venta = itemsVenta.find((v) => v.id === item.id);
+        if (venta) {
+          setCardDetalle(venta);
+        }
+        return;
+      }
 
       const colores = resolveColores(cat, cat.nombre);
       setCardDetalle({
@@ -103,7 +110,7 @@ export default function CollectionShell({
         ...colores,
       });
     },
-    [categorias]
+    [categorias, itemsVenta]
   );
 
   const categoriaActiva = section.startsWith("cat-")
@@ -115,7 +122,7 @@ export default function CollectionShell({
     : -1;
 
   const totalItems = items.length;
-  const itemsEnVenta = items.filter(estaEnVenta);
+  const itemsEnVenta = itemsVenta;
 
   return (
     <div className="app-shell">
@@ -297,7 +304,6 @@ export default function CollectionShell({
             <VentasSection
               items={itemsEnVenta}
               telefono={perfil?.telefono ?? null}
-              onVerColeccion={(id) => irA(`cat-${id}`)}
               onVerCard={(item) => abrirCard(item)}
             />
           )}

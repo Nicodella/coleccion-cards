@@ -8,14 +8,12 @@ import { mensajeConsultaCard, whatsappUrl } from "@/lib/whatsapp";
 interface VentasSectionProps {
   items: ItemConCategoria[];
   telefono: string | null;
-  onVerColeccion: (categoriaId: string) => void;
   onVerCard?: (item: ItemConCategoria) => void;
 }
 
 export default function VentasSection({
   items,
   telefono,
-  onVerColeccion,
   onVerCard,
 }: VentasSectionProps) {
   const enVenta = items.filter(estaEnVenta);
@@ -91,11 +89,7 @@ export default function VentasSection({
                     <button
                       type="button"
                       className="venta-btn"
-                      onClick={() =>
-                        onVerCard
-                          ? onVerCard(item)
-                          : onVerColeccion(item.categoriaId)
-                      }
+                      onClick={() => onVerCard?.(item)}
                     >
                       Ver card
                     </button>

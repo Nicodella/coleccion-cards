@@ -22,10 +22,10 @@ CREATE TABLE IF NOT EXISTS categorias (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Ítems (categoria_id = categoría principal; también pueden tener varias vía item_categorias)
+-- Ítems (categoria_id = categoría principal de colección; NULL = solo venta)
 CREATE TABLE IF NOT EXISTS items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  categoria_id UUID NOT NULL REFERENCES categorias(id) ON DELETE CASCADE,
+  categoria_id UUID REFERENCES categorias(id) ON DELETE CASCADE,
   nombre TEXT NOT NULL,
   descripcion TEXT DEFAULT '',
   precio NUMERIC(10, 2),

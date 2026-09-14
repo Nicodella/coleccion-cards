@@ -35,11 +35,14 @@ export default function AdminPage() {
   const [catForm, setCatForm] = useState<CategoriaForm>(FORM_VACIO);
 
   const [editandoItemId, setEditandoItemId] = useState<string | null>(null);
+  const [editandoVentaId, setEditandoVentaId] = useState<string | null>(null);
   const [items, setItems] = useState<ItemAdmin[]>([]);
   const [filtroCategoria, setFiltroCategoria] = useState("");
   const [filtroNombre, setFiltroNombre] = useState("");
   const [filtroDescripcion, setFiltroDescripcion] = useState("");
   const [paginaItems, setPaginaItems] = useState(1);
+  const [filtroVentaNombre, setFiltroVentaNombre] = useState("");
+  const [paginaVentas, setPaginaVentas] = useState(1);
   const [visitasStats, setVisitasStats] = useState<{
     visitantes: number;
     porSeccion: { seccion: string; visitas: number; ips: number }[];
@@ -49,11 +52,16 @@ export default function AdminPage() {
     categoria_ids: [] as string[],
     nombre: "",
     descripcion: "",
-    en_venta: false,
+  });
+  const [fotos, setFotos] = useState<FileList | null>(null);
+
+  const [ventaForm, setVentaForm] = useState({
+    nombre: "",
+    descripcion: "",
     precio: "",
     cantidad_venta: "1",
   });
-  const [fotos, setFotos] = useState<FileList | null>(null);
+  const [fotosVenta, setFotosVenta] = useState<FileList | null>(null);
 
   const verificarSesion = useCallback(async () => {
     const res = await fetch("/api/admin/session");
@@ -297,16 +305,31 @@ export default function AdminPage() {
       categoria_ids: [],
       nombre: "",
       descripcion: "",
-      en_venta: false,
-      precio: "",
-      cantidad_venta: "1",
     });
     setFotos(null);
     const input = document.getElementById("fotos-input") as HTMLInputElement | null;
     if (input) input.value = "";
   }
 
+  function resetVentaForm() {
+    setEditandoVentaId(null);
+    setVentaForm({
+      nombre: "",
+      descripcion: "",
+      precio: "",
+      cantidad_venta: "1",
+    });
+    setFotosVenta(null);
+    const input = document.getElementById("fotos-venta-input") as HTMLInputElement | null;
+    if (input) input.value = "";
+  }
+
   function iniciarEdicionItem(item: ItemAdmin) {
+    if (item.es_venta) {
+      iniciarEdicionVenta(item);
+      return;
+    }
+    setEditandoVentaId(null);
     setEditandoItemId(item.id);
     setItemForm({
       categoria_ids:
@@ -317,9 +340,6 @@ export default function AdminPage() {
             : [],
       nombre: item.nombre,
       descripcion: item.descripcion,
-      en_venta: item.en_venta,
-      precio: item.precio != null ? String(item.precio) : "",
-      cantidad_venta: String(item.cantidad_venta > 0 ? item.cantidad_venta : 1),
     });
     setFotos(null);
     const input = document.getElementById("fotos-input") as HTMLInputElement | null;
@@ -328,6 +348,26 @@ export default function AdminPage() {
     requestAnimationFrame(() => {
       document
         .getElementById("item-form-section")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  function iniciarEdicionVenta(item: ItemAdmin) {
+    setEditandoItemId(null);
+    setEditandoVentaId(item.id);
+    setVentaForm({
+      nombre: item.nombre,
+      descripcion: item.descripcion,
+      precio: item.precio != null ? String(item.precio) : "",
+      cantidad_venta: String(item.cantidad_venta > 0 ? item.cantidad_venta : 1),
+    });
+    setFotosVenta(null);
+    const input = document.getElementById("fotos-venta-input") as HTMLInputElement | null;
+    if (input) input.value = "";
+    mostrarMensaje("");
+    requestAnimationFrame(() => {
+      document
+        .getElementById("venta-form-section")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
@@ -363,15 +403,11 @@ export default function AdminPage() {
     setLoading(true);
 
     const formData = new FormData();
+    formData.append("tipo", "coleccion");
     itemForm.categoria_ids.forEach((id) => formData.append("categoria_ids", id));
     formData.append("nombre", itemForm.nombre);
     formData.append("descripcion", itemForm.descripcion);
-    formData.append("en_venta", String(itemForm.en_venta));
-    formData.append("precio", itemForm.en_venta ? itemForm.precio : "");
-    formData.append(
-      "cantidad_venta",
-      itemForm.en_venta ? itemForm.cantidad_venta : "0"
-    );
+    formData.append("en_venta", "false");
 
     if (fotos) {
       Array.from(fotos).forEach((file) => {
@@ -395,6 +431,49 @@ export default function AdminPage() {
     }
   }
 
+  async function handleGuardarVenta(e: FormEvent) {
+    e.preventDefault();
+    mostrarMensaje("");
+
+    const esEdicion = Boolean(editandoVentaId);
+
+    if (!esEdicion && (!fotosVenta || fotosVenta.length === 0)) {
+      mostrarMensaje("Subí al menos una foto", true);
+      return;
+    }
+
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("tipo", "venta");
+    formData.append("nombre", ventaForm.nombre);
+    formData.append("descripcion", ventaForm.descripcion);
+    formData.append("en_venta", "true");
+    formData.append("precio", ventaForm.precio);
+    formData.append("cantidad_venta", ventaForm.cantidad_venta);
+
+    if (fotosVenta) {
+      Array.from(fotosVenta).forEach((file) => {
+        formData.append("fotos", file);
+      });
+    }
+
+    const res = esEdicion
+      ? await fetch(`/api/items/${editandoVentaId}`, { method: "PATCH", body: formData })
+      : await fetch("/api/items", { method: "POST", body: formData });
+
+    setLoading(false);
+
+    if (res.ok) {
+      resetVentaForm();
+      mostrarMensaje(esEdicion ? "✅ Venta actualizada" : "💰 Card agregada a ventas");
+      cargarItems();
+    } else {
+      const data = await res.json();
+      mostrarMensaje(data.error ?? "Error al guardar venta", true);
+    }
+  }
+
   async function handleEliminarItem(id: string, nombre: string) {
     if (!window.confirm(`¿Eliminar la card "${nombre}"?`)) {
       return;
@@ -406,6 +485,7 @@ export default function AdminPage() {
 
     if (res.ok) {
       if (editandoItemId === id) resetItemForm();
+      if (editandoVentaId === id) resetVentaForm();
       mostrarMensaje("🗑️ Card eliminada");
       cargarItems();
     } else {
@@ -416,7 +496,10 @@ export default function AdminPage() {
 
   const PAGE_SIZE = 10;
 
-  const itemsFiltrados = items.filter((item) => {
+  const itemsColeccion = items.filter((item) => !item.es_venta);
+  const itemsSoloVenta = items.filter((item) => item.es_venta);
+
+  const itemsFiltrados = itemsColeccion.filter((item) => {
     if (
       filtroCategoria &&
       !(item.categoria_ids?.includes(filtroCategoria) || item.categoria_id === filtroCategoria)
@@ -441,9 +524,25 @@ export default function AdminPage() {
     paginaActual * PAGE_SIZE
   );
 
+  const ventasFiltradas = itemsSoloVenta.filter((item) => {
+    const q = filtroVentaNombre.trim().toLowerCase();
+    if (q && !item.nombre.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const totalPaginasVenta = Math.max(1, Math.ceil(ventasFiltradas.length / PAGE_SIZE));
+  const paginaVentaActual = Math.min(paginaVentas, totalPaginasVenta);
+  const ventasPagina = ventasFiltradas.slice(
+    (paginaVentaActual - 1) * PAGE_SIZE,
+    paginaVentaActual * PAGE_SIZE
+  );
+
   useEffect(() => {
     setPaginaItems(1);
   }, [filtroCategoria, filtroNombre, filtroDescripcion]);
+
+  useEffect(() => {
+    setPaginaVentas(1);
+  }, [filtroVentaNombre]);
 
   if (autenticado === null) {
     return <p className={styles.loading}>⚽ Entrando al vestuario...</p>;
@@ -769,7 +868,7 @@ export default function AdminPage() {
           <p className={styles.sectionHint}>
             {editandoItemId
               ? "Modificá los datos y guardá. Las fotos son opcionales (si no subís nuevas, se mantienen)."
-              : "Cargá una card nueva al álbum. Después podés editarla desde la lista de abajo."}
+              : "Cargá una card nueva al álbum (colección). Las ventas se cargan en el panel de abajo."}
           </p>
 
           <form id="item-form" className={styles.formGrid} onSubmit={handleGuardarItem}>
@@ -813,59 +912,6 @@ export default function AdminPage() {
                 rows={3}
               />
             </label>
-
-            <label className={`${styles.checkRow} ${styles.fullWidth}`}>
-              <input
-                type="checkbox"
-                checked={itemForm.en_venta}
-                onChange={(e) =>
-                  setItemForm({
-                    ...itemForm,
-                    en_venta: e.target.checked,
-                    precio: e.target.checked ? itemForm.precio : "",
-                    cantidad_venta: e.target.checked
-                      ? itemForm.cantidad_venta || "1"
-                      : "0",
-                  })
-                }
-              />
-              <span>Disponible para venta</span>
-            </label>
-
-            {itemForm.en_venta && (
-              <>
-                <label>
-                  Precio ($)
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="ej. 500"
-                    value={itemForm.precio}
-                    onChange={(e) =>
-                      setItemForm({ ...itemForm, precio: e.target.value })
-                    }
-                    required
-                  />
-                </label>
-                <label>
-                  Cantidad de repetidas
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={itemForm.cantidad_venta}
-                    onChange={(e) =>
-                      setItemForm({
-                        ...itemForm,
-                        cantidad_venta: e.target.value,
-                      })
-                    }
-                    required
-                  />
-                </label>
-              </>
-            )}
 
             <label className={styles.fullWidth}>
               Fotos {editandoItemId ? "(opcional — reemplaza las actuales)" : "(una o más)"}
@@ -918,7 +964,7 @@ export default function AdminPage() {
             card y editarla o eliminarla.
           </p>
 
-          {items.length > 0 && (
+          {itemsColeccion.length > 0 && (
             <div className={styles.filtrosBar}>
               <label>
                 Categoría
@@ -968,7 +1014,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          {items.length > 0 ? (
+          {itemsColeccion.length > 0 ? (
             itemsFiltrados.length > 0 ? (
               <>
                 <p className={styles.paginacionMeta}>
@@ -994,10 +1040,7 @@ export default function AdminPage() {
                           <div>
                             <strong>{item.nombre}</strong>
                             <span className={styles.itemMeta}>
-                              {item.categoria_nombre}
-                              {item.en_venta && item.precio != null
-                                ? ` · $ ${item.precio} · ${item.cantidad_venta} disp.`
-                                : " · Colección"}
+                              {item.categoria_nombre} · Colección
                             </span>
                           </div>
                         </div>
@@ -1056,7 +1099,242 @@ export default function AdminPage() {
               </p>
             )
           ) : (
-            <p className={styles.sectionHint}>Todavía no hay cards cargadas.</p>
+            <p className={styles.sectionHint}>Todavía no hay cards en el álbum.</p>
+          )}
+        </section>
+
+        <section className={styles.section} id="venta-form-section">
+          <h2>{editandoVentaId ? "✏️ Editar venta" : "💰 Ventas"}</h2>
+          <p className={styles.sectionHint}>
+            Cards solo para la sección Ventas del sitio. No van a ninguna
+            colección ni categoría.
+          </p>
+
+          <form className={styles.formGrid} onSubmit={handleGuardarVenta}>
+            <label>
+              Nombre
+              <input
+                type="text"
+                value={ventaForm.nombre}
+                onChange={(e) =>
+                  setVentaForm({ ...ventaForm, nombre: e.target.value })
+                }
+                required
+              />
+            </label>
+
+            <label>
+              Precio ($)
+              <input
+                type="number"
+                min="0"
+                step="1"
+                placeholder="ej. 500"
+                value={ventaForm.precio}
+                onChange={(e) =>
+                  setVentaForm({ ...ventaForm, precio: e.target.value })
+                }
+                required
+              />
+            </label>
+
+            <label>
+              Cantidad
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={ventaForm.cantidad_venta}
+                onChange={(e) =>
+                  setVentaForm({
+                    ...ventaForm,
+                    cantidad_venta: e.target.value,
+                  })
+                }
+                required
+              />
+            </label>
+
+            <label className={styles.fullWidth}>
+              Descripción
+              <textarea
+                value={ventaForm.descripcion}
+                onChange={(e) =>
+                  setVentaForm({ ...ventaForm, descripcion: e.target.value })
+                }
+                rows={3}
+              />
+            </label>
+
+            <label className={styles.fullWidth}>
+              Fotos{" "}
+              {editandoVentaId
+                ? "(opcional — reemplaza las actuales)"
+                : "(una o más)"}
+              <input
+                id="fotos-venta-input"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setFotosVenta(e.target.files)}
+                required={!editandoVentaId}
+              />
+            </label>
+
+            {editandoVentaId && (
+              <div className={`${styles.fotosActuales} ${styles.fullWidth}`}>
+                {items
+                  .find((i) => i.id === editandoVentaId)
+                  ?.fotos.map((foto) => (
+                    <img key={foto.id} src={foto.url} alt="" />
+                  ))}
+              </div>
+            )}
+
+            <div className={styles.fullWidth}>
+              <button type="submit" disabled={loading} className={styles.submitBtn}>
+                {loading
+                  ? "Guardando..."
+                  : editandoVentaId
+                    ? "Guardar cambios"
+                    : "💰 Agregar a ventas"}
+              </button>
+              {editandoVentaId && (
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  onClick={resetVentaForm}
+                  style={{ marginTop: "0.5rem" }}
+                >
+                  Cancelar edición
+                </button>
+              )}
+            </div>
+          </form>
+        </section>
+
+        <section className={styles.section}>
+          <h2>💰 Cards en venta</h2>
+          <p className={styles.sectionHint}>
+            Listado de lo que se muestra en la sección Ventas del sitio público.
+          </p>
+
+          {itemsSoloVenta.length > 0 && (
+            <div className={styles.filtrosBar}>
+              <label>
+                Nombre
+                <input
+                  type="search"
+                  placeholder="Buscar por nombre…"
+                  value={filtroVentaNombre}
+                  onChange={(e) => setFiltroVentaNombre(e.target.value)}
+                />
+              </label>
+              {filtroVentaNombre && (
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  onClick={() => setFiltroVentaNombre("")}
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+          )}
+
+          {itemsSoloVenta.length > 0 ? (
+            ventasFiltradas.length > 0 ? (
+              <>
+                <p className={styles.paginacionMeta}>
+                  Mostrando {(paginaVentaActual - 1) * PAGE_SIZE + 1}–
+                  {Math.min(
+                    paginaVentaActual * PAGE_SIZE,
+                    ventasFiltradas.length
+                  )}{" "}
+                  de {ventasFiltradas.length}
+                </p>
+                <ul className={styles.itemList}>
+                  {ventasPagina.map((item) => {
+                    const preview = item.fotos[0]?.url;
+                    return (
+                      <li key={item.id} className={styles.itemRow}>
+                        <div className={styles.itemInfo}>
+                          {preview ? (
+                            <img
+                              src={preview}
+                              alt=""
+                              className={styles.itemThumb}
+                            />
+                          ) : (
+                            <span className={styles.itemThumbEmpty}>💰</span>
+                          )}
+                          <div>
+                            <strong>{item.nombre}</strong>
+                            <span className={styles.itemMeta}>
+                              $ {item.precio} · {item.cantidad_venta} disp.
+                            </span>
+                          </div>
+                        </div>
+                        <div className={styles.categoriaActions}>
+                          <button
+                            type="button"
+                            className={styles.btnSecondary}
+                            onClick={() => iniciarEdicionVenta(item)}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.btnDanger}
+                            onClick={() =>
+                              handleEliminarItem(item.id, item.nombre)
+                            }
+                            disabled={loading}
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {totalPaginasVenta > 1 && (
+                  <div className={styles.paginacion}>
+                    <button
+                      type="button"
+                      className={styles.btnSecondary}
+                      disabled={paginaVentaActual <= 1}
+                      onClick={() =>
+                        setPaginaVentas((p) => Math.max(1, p - 1))
+                      }
+                    >
+                      ← Anterior
+                    </button>
+                    <span className={styles.paginacionInfo}>
+                      Página {paginaVentaActual} / {totalPaginasVenta}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.btnSecondary}
+                      disabled={paginaVentaActual >= totalPaginasVenta}
+                      onClick={() =>
+                        setPaginaVentas((p) =>
+                          Math.min(totalPaginasVenta, p + 1)
+                        )
+                      }
+                    >
+                      Siguiente →
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className={styles.sectionHint}>
+                Ninguna venta coincide con el filtro.
+              </p>
+            )
+          ) : (
+            <p className={styles.sectionHint}>Todavía no hay cards en venta.</p>
           )}
         </section>
       </div>

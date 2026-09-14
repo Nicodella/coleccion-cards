@@ -7,6 +7,24 @@ export interface ItemConCategoria extends Item, CategoriaColores {
   categoriaNombre: string;
 }
 
+/** Tema fijo para ítems del panel Ventas (sin categoría). */
+export const VENTA_THEME: CategoriaColores & {
+  categoriaId: string;
+  categoriaNombre: string;
+} = {
+  categoriaId: "ventas",
+  categoriaNombre: "Ventas",
+  color_accent: "#ffd700",
+  color_border: "#e6b800",
+  color_badge_bg: "#ffd700",
+  color_badge_text: "#0f3d1f",
+  emoji: "💰",
+};
+
+export function asItemVenta(item: Item): ItemConCategoria {
+  return { ...item, ...VENTA_THEME };
+}
+
 /** Aplana categorías → items únicos (para carrusel / ventas). */
 export function flattenItems(
   categorias: {
